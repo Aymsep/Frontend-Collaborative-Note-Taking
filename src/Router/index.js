@@ -33,7 +33,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const loggedIn = false; 
+  const loggedIn = true; 
 
   if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) { 
     next({ name: 'Login' }); 

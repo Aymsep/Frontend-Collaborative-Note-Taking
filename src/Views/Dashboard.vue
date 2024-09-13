@@ -1,10 +1,12 @@
 <template>
-    <div>
-    Dashboard
-    </div>
+   <ProfileDrop />
+   <NoteContainer />
 </template>
 
 <script setup>
+import NoteContainer from '../components/Notes/NoteContainer.VUE';
+import ProfileDrop from '../components/common/ProfileDrop.vue';
+
 
 </script>
 
