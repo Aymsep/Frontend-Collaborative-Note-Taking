@@ -46,17 +46,16 @@
 
     <textarea
       ref="textarea"
-      v-model="noteContent"
       class="w-full h-full resize-none bg-transparent border-none"
       placeholder="Write your note here..."
-    ></textarea>
+    >{{ note.content }}</textarea>
 
     <div class="flex justify-between items-center mt-4">
       <div>
         <button @click="applyStyle('bold')" class="text-gray-600 hover:text-gray-900">Bold</button>
         <button @click="applyStyle('italic')" class="ml-2 text-gray-600 hover:text-gray-900">Italic</button>
       </div>
-      <span class="text-sm text-gray-500">{{ date }}</span>
+      <span class="text-sm text-gray-500">{{ formatDate(note.createdAt) }}</span>
     </div>
 
     <!-- Share Modal -->
@@ -82,10 +81,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 
-const noteContent = ref('');
-const date = new Date().toLocaleDateString();
+const props  = defineProps({
+  note: String,
+})
+onMounted(() => {
+  console.log(props.noteContent)
+})
+
+
 
 const randomHexColor = () => {
   const getLightHex = () => Math.floor(Math.random() * 128 + 128).toString(16).padStart(2, '0');
@@ -125,6 +130,18 @@ const deleteNote = () => {
   // Logic to delete the note (for now, just close dropdown)
   isDropdownOpen.value = false;
 };
+
+const formatDate = (isoDateString) => {
+      const date = new Date(isoDateString);
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      }).format(date);
+    };
 </script>
 
 <style scoped>

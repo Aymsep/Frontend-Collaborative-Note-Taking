@@ -5,21 +5,21 @@
       @mouseover="isDropdownOpen = true" 
       @mouseleave="isDropdownOpen = false"
     >
-      <img 
-        src="https://via.placeholder.com/40" 
-        alt="User Avatar"
-        class="h-10 w-10 rounded-full"
-      />
-      <span class="text-black font-medium">Bonnie Green</span>
+     <div class="avatar">
+      {{ user.username.toUpperCase().charAt(0) }}
+     </div>
+      <span class="text-black font-medium">{{user.username}}</span><br>
+      <span class="text-black font-medium">{{user.email}}</span>
       <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        class="h-5 w-5 text-gray-400" 
-        viewBox="0 0 20 20" 
-        fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg" 
+      class="h-5 w-5 text-gray-400" 
+      viewBox="0 0 20 20" 
+      fill="currentColor"
       >
-        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-      </svg>
-    </div>
+      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+    </svg>
+  </div>
+  <a href="#" @click="logout" class="text-black font-medium">Logout</a>
 
     <!-- Dropdown Menu -->
     <div 
@@ -36,6 +36,31 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useUserStore } from '../../Store/user.Store';
+import { useRouter } from 'vue-router';
 
 const isDropdownOpen = ref(false);
+const {user,logout} = useUserStore();
+const router = useRouter();
+const handleLogout = async () => {
+   logout(router);
+}
+console.log('user: ' + user.email)
+
+
 </script>
+
+<style scoped>
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+</style>
+
