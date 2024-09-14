@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../Store/user.Store';
+import { useNotesStore } from '../Store/note.Store';
 // import { isAuthenticated } from '@/services/auth'; // assuming auth service
 
 const routes = [
@@ -22,11 +23,13 @@ const routes = [
     meta: { requiresAuth: true }, // Only allow authenticated users
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
+      const noteStore = useNotesStore()
 
       if (!userStore.isAuthenticated) {
         next('/login');
       } else {
-        await userStore.fetchProfileAndNotes();  // Fetch user profile on dashboard entry
+        await userStore.fetchProfile();  // Fetch user profile on dashboard entry
+        await noteStore.fetchNotes();  // Fetch user profile on dashboard entry
         next();
       }
     },

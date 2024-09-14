@@ -61,16 +61,12 @@ export const useUserStore = defineStore('user', {
     },
 
     // Fetch user profile
-    async fetchProfileAndNotes() {
+    async fetchProfile() {
         try {
             this.loading = true;
             // Fetch profile
             const profileResponse = await getProfile();
             this.user = profileResponse.data;
-  
-            // Fetch notes
-            const notesResponse = await getMyNotes();
-            this.notes = notesResponse.data;
           } catch (err) {
             console.error('Failed to fetch profile and notes', err);
           }finally {

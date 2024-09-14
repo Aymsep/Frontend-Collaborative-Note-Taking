@@ -45,10 +45,12 @@
     </div>
 
     <textarea
+    v-model="noteContent"
       ref="textarea"
       class="w-full h-full resize-none bg-transparent border-none"
       placeholder="Write your note here..."
-    >{{ note.content }}</textarea>
+      @input="handleContentChange"
+    >{{ noteContent }}</textarea>
 
     <div class="flex justify-between items-center mt-4">
       <div>
@@ -82,10 +84,18 @@
 
 <script setup>
 import { ref,onMounted } from 'vue';
+import {useNotesStore} from '../../Store/note.Store'
+import { debounce } from '../../Utils/debounce';
+
 
 const props  = defineProps({
   note: String,
 })
+
+const noteContent = ref(props.note.content);
+
+const noteStore = useNotesStore()
+
 onMounted(() => {
   console.log(props.noteContent)
 })
@@ -126,10 +136,26 @@ const closeShareModal = () => {
   isShareModalOpen.value = false;
 };
 
-const deleteNote = () => {
+const deleteNote =async () => {
   // Logic to delete the note (for now, just close dropdown)
-  isDropdownOpen.value = false;
+  // isDropdownOpen.value = false;
+  await noteStore.removeNote(props.note.id)
+  console.log('lenght',noteStore.notes)
 };
+
+// Debounced save to the backend
+const debouncedSave = debounce(async (content) => {
+  await noteStore.editNote(props.note.id, content);  // Call store to update note in the database
+}, 500);
+
+
+// Handle content change
+const handleContentChange = () => {
+  debouncedSave(noteContent.value);  // Trigger the debounced save
+};
+
+
+
 
 const formatDate = (isoDateString) => {
       const date = new Date(isoDateString);

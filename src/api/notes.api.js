@@ -12,6 +12,11 @@ export const getSingleNote = (noteId) => {
   return api.get(`/notes/${noteId}`);
 };
 
+export const updateNote = (noteId,content) => {
+  console.log('entred')
+  return api.patch(`/notes/${noteId}`, {content} );
+};
+
 export const deleteNote = (noteId) => {
   return api.delete(`/notes/${noteId}`);
 };
