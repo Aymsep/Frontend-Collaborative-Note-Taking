@@ -83,10 +83,22 @@
 </template>
 
 <script setup>
-import { ref,onMounted } from 'vue';
+import { ref,onMounted,onUnmounted } from 'vue';
 import {useNotesStore} from '../../Store/note.Store'
 import { debounce } from '../../Utils/debounce';
+import { io } from 'socket.io-client';                  // Socket.IO client
 
+
+
+const socket = io('http://localhost:3000', { transports: ['websocket'] });  // Correct URL
+
+socket.on('connect', () => {
+  console.log('WebSocket connection established');
+});
+
+socket.on('connect_error', (error) => {
+  console.error('WebSocket connection error:', error);
+});
 
 const props  = defineProps({
   note: String,
@@ -152,9 +164,18 @@ const debouncedSave = debounce(async (content) => {
 // Handle content change
 const handleContentChange = () => {
   debouncedSave(noteContent.value);  // Trigger the debounced save
+  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });  // Emit real-time changes
 };
 
+onMounted(() => {
+  socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
+    noteContent.value = updatedContent;  // Update note content in real-time
+  });
+});
 
+onUnmounted(() => {
+  socket.off(`noteUpdated:${props.note.id}`);  // Cleanup WebSocket listeners
+});
 
 
 const formatDate = (isoDateString) => {
