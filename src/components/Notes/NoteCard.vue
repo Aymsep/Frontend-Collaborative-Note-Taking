@@ -111,6 +111,8 @@ const props = defineProps({
   note: Object,
 });
 
+
+
 // Reactive references
 const noteContent = ref(props.note.content);
 const noteStore = useNotesStore();
@@ -141,9 +143,9 @@ const setupWebSocketListeners = (noteId) => {
     console.log('A note is editing');
     noteContent.value = updatedContent;
   });
-
   socket.on(`noteDeleted:${noteId}`, () => {
-    noteStore.notes = noteStore.notes.filter(note => note.id !== noteId);
+    console.log('A note is deleted');
+    noteStore.removeNoteWs(noteId);
   });
 
   socket.on(`noteShared:${userStore.user.id}`, (data) => {
@@ -195,6 +197,7 @@ const handleContentChange = () => {
 
 // Handle note deletion
 const deleteNote = async () => {
+  console.log('Deleting note:', props.note.id);
   await noteStore.removeNote(props.note.id);
   socket.emit('deleteNote', { noteId: props.note.id });
 };

@@ -91,5 +91,18 @@ export const useNotesStore = defineStore('notes', {
       console.log('Note already exists, skipping:', newNote.id);
     }
   },
+  async removeNoteWs(noteId) {
+    try {
+      const noteIndex = this.notes.findIndex(note => note.id === noteId);
+      if (noteIndex !== -1) {
+        this.notes.splice(noteIndex, 1);  // Remove the note by index
+      }
+    } catch (err) {
+      this.error = 'Failed to delete note';
+      console.error('Error deleting note:', err);
+    } finally {
+      this.loading = false;
+    }
+  },
     },
 });
