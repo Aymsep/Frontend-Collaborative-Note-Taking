@@ -2,7 +2,7 @@
     <div class="p-8">
       <h1 class="text-2xl font-bold mb-6">Your Notes</h1>
       <div class="grid grid-cols-3 gap-6">
-        <NoteCard v-for="(note, index) in notes" :note="note" :key="index" />
+        <NoteCard v-for="(note, index) in notes" :note="note" :key="note.id" />
         <AddNote @click="addNewNote" />
       </div>
     </div>
