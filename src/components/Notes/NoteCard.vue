@@ -88,16 +88,17 @@
 </template>
 
 <script setup>
-import { ref,onMounted,onUnmounted } from 'vue';
-import {useNotesStore} from '../../Store/note.Store'
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
-import { io } from 'socket.io-client';          
-import { getUsers } from '../../api/user.api';  // API call to get users
+import { io } from 'socket.io-client';
+import { getUsers } from '../../api/user.api';
+import { useUserStore } from '../../Store/user.Store';
 
+// Initialize WebSocket connection
+const socket = io('http://localhost:3000', { transports: ['websocket'] });
 
-
-const socket = io('http://localhost:3000', { transports: ['websocket'] });  // Correct URL
-
+// Log WebSocket connection status
 socket.on('connect', () => {
   console.log('WebSocket connection established');
 });
@@ -106,17 +107,20 @@ socket.on('connect_error', (error) => {
   console.error('WebSocket connection error:', error);
 });
 
-const props  = defineProps({
-  note: String,
-})
+const props = defineProps({
+  note: Object,
+});
 
+// Reactive references
 const noteContent = ref(props.note.content);
+const noteStore = useNotesStore();
+const isDropdownOpen = ref(false);
+const isShareModalOpen = ref(false);
+const users = ref([]);
+const selectedUsers = ref([]);
+const userStore = useUserStore();
 
-const noteStore = useNotesStore()
-
-
-
-
+// Random light color generator
 const randomHexColor = () => {
   const getLightHex = () => Math.floor(Math.random() * 128 + 128).toString(16).padStart(2, '0');
   return `#${getLightHex()}${getLightHex()}${getLightHex()}`;
@@ -124,14 +128,49 @@ const randomHexColor = () => {
 
 const randomBgColor = ref(randomHexColor());
 
-const isDropdownOpen = ref(false);
-const isShareModalOpen = ref(false);
+// Fetch users and set up WebSocket listeners
+onMounted(async () => {
+  const response = await getUsers();
+  users.value = response.data;
+  setupWebSocketListeners(props.note.id);  // Set up WebSocket listeners
+});
 
-const users = ref([]);  // Store all users
-const selectedUsers = ref([]);  // Store selected users
+// Set up WebSocket listeners
+const setupWebSocketListeners = (noteId) => {
+  socket.on(`noteUpdated:${noteId}`, (updatedContent) => {
+    console.log('A note is editing');
+    noteContent.value = updatedContent;
+  });
 
+  socket.on(`noteDeleted:${noteId}`, () => {
+    noteStore.notes = noteStore.notes.filter(note => note.id !== noteId);
+  });
 
+  socket.on(`noteShared:${userStore.user.id}`, (data) => {
+    console.log('A note has been shared with you:', data.note);
+    // noteStore.notes.push(data.note);  // Add shared note to the user's list
+    noteStore.addNoteWs(data.note);
+  });
+};
 
+// Clean up WebSocket listeners
+onUnmounted(() => {
+  cleanupWebSocketListeners(props.note.id);
+});
+
+const cleanupWebSocketListeners = (noteId) => {
+  socket.off(`noteUpdated:${noteId}`);
+  socket.off(`noteDeleted:${noteId}`);
+  socket.off(`noteShared:${userStore.user.id}`);
+};
+
+// Watch for changes in note ID to re-setup WebSocket listeners
+watch(() => props.note.id, (newNoteId, oldNoteId) => {
+  cleanupWebSocketListeners(oldNoteId);
+  setupWebSocketListeners(newNoteId);
+});
+
+// Toggle dropdown menu visibility
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
@@ -141,49 +180,26 @@ const closeDropdown = () => {
 };
 
 const openShareModal = () => {
-  isDropdownOpen.value = false; // Close dropdown
   isShareModalOpen.value = true;
 };
 
-const closeShareModal = () => {
-  isShareModalOpen.value = false;
-};
-
-const deleteNote =async () => {
-  console.log('delted')
-  // Logic to delete the note (for now, just close dropdown)
-  // isDropdownOpen.value = false;
-  await noteStore.removeNote(props.note.id)
-  socket.emit('deleteNote', { noteId: props.note.id }); // Emit real-time deletion event
-};
-
-// Debounced save to the backend
+// Handle note content changes (with debounced save and WebSocket update)
 const debouncedSave = debounce(async (content) => {
-  await noteStore.editNote(props.note.id, content);  // Call store to update note in the database
+  await noteStore.editNote(props.note.id, content);
 }, 500);
 
-
-// Handle content change
 const handleContentChange = () => {
-  debouncedSave(noteContent.value);  // Trigger the debounced save
-  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });  // Emit real-time changes
+  debouncedSave(noteContent.value);
+  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });
 };
 
-onMounted(async() => {
-  const response = await getUsers();
-  users.value = response.data;
-  console.log('users',users)
-  socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
-    noteContent.value = updatedContent;  // Update note content in real-time
-  });
-  socket.on(`noteDeleted:${props.note.id}`, () => {
-    noteStore.notes = noteStore.notes.filter(note => note.id !== props.note.id); // Remove the note from the store
-  });
-});
-// const getAvatar = (email) => {
-//   const hash = md5(email.trim().toLowerCase());  // Use gravatar or custom avatar
-//   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
-// };
+// Handle note deletion
+const deleteNote = async () => {
+  await noteStore.removeNote(props.note.id);
+  socket.emit('deleteNote', { noteId: props.note.id });
+};
+
+// Toggle user selection for sharing
 const toggleUserSelection = (userId) => {
   if (selectedUsers.value.includes(userId)) {
     selectedUsers.value = selectedUsers.value.filter(id => id !== userId);
@@ -191,34 +207,34 @@ const toggleUserSelection = (userId) => {
     selectedUsers.value.push(userId);
   }
 };
-const shareNote =async () => {
-  // socket.emit('shareNote', {
-  //   noteId: props.note.id,
-  //   sharedWith: selectedUsers.value,
-  // });
-  {
 
-  noteStore.shareNote({NoteId: props.note.id,targetId: selectedUsers.value[0]})
-  closeShareModal();  // Close modal after sharing
+// Share the note with selected users
+const shareNote = async () => {
+  await noteStore.shareNote({
+    NoteId: props.note.id,
+    targetId: selectedUsers.value[0],
+  });
+  socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
+  closeShareModal();
 };
-}
-onUnmounted(() => {
-  socket.off(`noteUpdated:${props.note.id}`);  // Cleanup WebSocket listeners
-  socket.off(`noteDeleted:${props.note.id}`); // Cleanup listeners
-});
 
+// Close the share modal
+const closeShareModal = () => {
+  isShareModalOpen.value = false;
+};
 
+// Format the date for display
 const formatDate = (isoDateString) => {
-      const date = new Date(isoDateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
-    };
+  const date = new Date(isoDateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  }).format(date);
+};
 </script>
 
 <style scoped>

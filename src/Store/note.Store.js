@@ -81,5 +81,15 @@ export const useNotesStore = defineStore('notes', {
             this.loading = false;
     }
   },
+
+  addNoteWs(newNote) {
+    // Check if a note with the same ID already exists
+    const existingNote = this.notes.find(note => note.id === newNote.id);
+    if (!existingNote) {
+      this.notes.push(newNote); // Add the note if it's not already in the store
+    } else {
+      console.log('Note already exists, skipping:', newNote.id);
+    }
+  },
     },
 });
