@@ -67,15 +67,20 @@
     >
       <div class="bg-white p-6 rounded-md w-96">
         <h2 class="text-lg font-bold mb-4">Share this note with:</h2>
-        <ul class="mb-4">
-          <li v-for="user in users" :key="user.id" class="mb-2">
-            <input type="checkbox" :id="'user-' + user.id" class="mr-2">
-            <label :for="'user-' + user.id">{{ user.name }}</label>
-          </li>
-        </ul>
-        <div class="flex justify-end">
+        <div class="flex flex-wrap">
+          <div
+            v-for="user in users"
+            :key="user.id"
+            :class="['p-2 flex items-center cursor-pointer', { 'bg-blue-100': selectedUsers.includes(user.id) }]"
+            @click="toggleUserSelection(user.id)"
+          >
+            <!-- <img :src="getAvatar(user.email)" class="w-10 h-10 rounded-full mr-3" alt="User Avatar" /> -->
+            <span class="font-semibold">{{ user.username }}</span>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4">
           <button @click="closeShareModal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2">Cancel</button>
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-md">Share</button>
+          <button @click="shareNote" class="px-4 py-2 bg-blue-600 text-white rounded-md">Share</button>
         </div>
       </div>
     </div>
@@ -86,7 +91,8 @@
 import { ref,onMounted,onUnmounted } from 'vue';
 import {useNotesStore} from '../../Store/note.Store'
 import { debounce } from '../../Utils/debounce';
-import { io } from 'socket.io-client';                  // Socket.IO client
+import { io } from 'socket.io-client';          
+import { getUsers } from '../../api/user.api';  // API call to get users
 
 
 
@@ -108,9 +114,6 @@ const noteContent = ref(props.note.content);
 
 const noteStore = useNotesStore()
 
-onMounted(() => {
-  console.log(props.noteContent)
-})
 
 
 
@@ -124,12 +127,10 @@ const randomBgColor = ref(randomHexColor());
 const isDropdownOpen = ref(false);
 const isShareModalOpen = ref(false);
 
-const users = ref([
-  { id: 1, name: 'Alice Johnson' },
-  { id: 2, name: 'Bob Smith' },
-  { id: 3, name: 'Charlie Davis' },
-  { id: 4, name: 'Diana Roberts' },
-]);
+const users = ref([]);  // Store all users
+const selectedUsers = ref([]);  // Store selected users
+
+
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -149,10 +150,11 @@ const closeShareModal = () => {
 };
 
 const deleteNote =async () => {
+  console.log('delted')
   // Logic to delete the note (for now, just close dropdown)
   // isDropdownOpen.value = false;
   await noteStore.removeNote(props.note.id)
-  console.log('lenght',noteStore.notes)
+  socket.emit('deleteNote', { noteId: props.note.id }); // Emit real-time deletion event
 };
 
 // Debounced save to the backend
@@ -167,14 +169,42 @@ const handleContentChange = () => {
   socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });  // Emit real-time changes
 };
 
-onMounted(() => {
+onMounted(async() => {
+  const response = await getUsers();
+  users.value = response.data;
+  console.log('users',users)
   socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
     noteContent.value = updatedContent;  // Update note content in real-time
   });
+  socket.on(`noteDeleted:${props.note.id}`, () => {
+    noteStore.notes = noteStore.notes.filter(note => note.id !== props.note.id); // Remove the note from the store
+  });
 });
+// const getAvatar = (email) => {
+//   const hash = md5(email.trim().toLowerCase());  // Use gravatar or custom avatar
+//   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+// };
+const toggleUserSelection = (userId) => {
+  if (selectedUsers.value.includes(userId)) {
+    selectedUsers.value = selectedUsers.value.filter(id => id !== userId);
+  } else {
+    selectedUsers.value.push(userId);
+  }
+};
+const shareNote =async () => {
+  // socket.emit('shareNote', {
+  //   noteId: props.note.id,
+  //   sharedWith: selectedUsers.value,
+  // });
+  {
 
+  noteStore.shareNote({NoteId: props.note.id,targetId: selectedUsers.value[0]})
+  closeShareModal();  // Close modal after sharing
+};
+}
 onUnmounted(() => {
   socket.off(`noteUpdated:${props.note.id}`);  // Cleanup WebSocket listeners
+  socket.off(`noteDeleted:${props.note.id}`); // Cleanup listeners
 });
 
 

@@ -21,6 +21,6 @@ export const deleteNote = (noteId) => {
   return api.delete(`/notes/${noteId}`);
 };
 
-export const shareNote = (noteId, targetId) => {
-  return api.post('/notes/share', { noteId, targetId });
+export const shareNote = (data) => {
+  return api.post('/notes/share', data);
 };

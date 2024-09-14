@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getMyNotes, createNote, deleteNote, updateNote } from '../api/notes.api';  // Import the note-related API functions
+import { getMyNotes, createNote, deleteNote, updateNote, shareNote } from '../api/notes.api';  // Import the note-related API functions
 
 export const useNotesStore = defineStore('notes', {
   state: () => ({
@@ -68,5 +68,18 @@ export const useNotesStore = defineStore('notes', {
           this.loading = false;
         }
       },
+
+    async shareNote(data){
+        this.loading = true;
+        try {
+            const response = await shareNote(data);
+            console.log('response',response);
+        } catch (err) {
+            this.error = 'Failed to fetch notes';
+            console.error('Error fetching notes:', err);
+        } finally {
+            this.loading = false;
+    }
   },
+    },
 });
