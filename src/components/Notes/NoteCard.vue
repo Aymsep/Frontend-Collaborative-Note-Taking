@@ -185,11 +185,12 @@ watch(() => props.note.id, (newNoteId, oldNoteId) => {
 
 // Handle note content changes (with debounced save and WebSocket update)
 const debouncedSave = debounce(async (content) => {
+  // socket.emit('editNote', { noteId: props.note.id, content });
   await noteStore.editNote(props.note.id, content);
-  socket.emit('editNote', { noteId: props.note.id, content });
 }, 500);
 
 const handleContentChange = () => {
+  socket.emit('editNote', { noteId: props.note.id, content:noteContent.value });
   debouncedSave(noteContent.value);
 };
 
