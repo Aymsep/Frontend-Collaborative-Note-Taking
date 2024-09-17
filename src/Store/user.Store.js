@@ -61,9 +61,6 @@ export const useUserStore = defineStore('user', {
       this.user = null;
       this.notes = [];
       removeToken();
-
-      const router = useRouter();
-      router.push('/login');
     },
 
     // Auth success handler

@@ -152,9 +152,7 @@ import Avatar from './Avatar.vue';
 const isDropdownOpen = ref(false);
 const {user,logout} = useUserStore();
 const router = useRouter();
-const handleLogout = async () => {
-   logout(router);
-}
+
 
 const username = ref(user.username);
 
