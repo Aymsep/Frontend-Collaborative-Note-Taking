@@ -1,35 +1,34 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../Store/user.Store';
 import { useNotesStore } from '../Store/note.Store';
-// import { isAuthenticated } from '@/services/auth'; // assuming auth service
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: ()=> import('../Views/Login.vue'),
+    component: () => import('../Views/Login.vue'),
     meta: { guest: true }, // Only allow guest (not logged-in users)
   },
   {
     path: '/signup',
     name: 'Signup',
-    component: ()=> import('../Views/Signup.vue'),
+    component: () => import('../Views/Signup.vue'),
     meta: { guest: true }, // Only allow guest (not logged-in users)
   },
   {
     path: '/',
     name: 'Dashboard',
-    component: ()=> import('../Views/Dashboard.vue'),
+    component: () => import('../Views/Dashboard.vue'),
     meta: { requiresAuth: true }, // Only allow authenticated users
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
-      const noteStore = useNotesStore()
+      const noteStore = useNotesStore();
 
       if (!userStore.isAuthenticated) {
         next('/login');
       } else {
-        await userStore.fetchProfile();  // Fetch user profile on dashboard entry
-        await noteStore.fetchNotes();  // Fetch user profile on dashboard entry
+        await userStore.fetchProfile();
+        await noteStore.fetchNotes();
         next();
       }
     },
@@ -37,7 +36,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: ()=> import('../Views/NotFound.vue'),
+    component: () => import('../Views/NotFound.vue'),
   },
 ];
 
@@ -46,27 +45,34 @@ const router = createRouter({
   routes,
 });
 
+// Global route guard to handle authentication and guest routes
+// router.beforeEach((to, from, next) => {
+//   const userStore = useUserStore(); // Access the user store
 
-router.beforeEach((to, from, next) => {
-  const userStore = useUserStore();  // Access user state from the store
-
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!userStore.isAuthenticated) {
-      next('/login');
-    } else {
-      next();
-    }
-  } else if (to.matched.some(record => record.meta.guest)) {
-    if (userStore.isAuthenticated) {
-      next('/');
-    } else {
-      next();
-    }
-  } else {
-    next();
-  }
-});
-
-
+//   // Check if the route requires authentication
+//   if (to.matched.some((record) => record.meta.requiresAuth)) {
+//     if (!userStore.isAuthenticated) {
+//       // Redirect to login if not authenticated
+//       next('/login');
+//     } else {
+//       // Proceed to the route if authenticated
+//       next();
+//     }
+//   } 
+//   // Check if the route is for guests
+//   else if (to.matched.some((record) => record.meta.guest)) {
+//     if (userStore.isAuthenticated) {
+//       // Redirect to dashboard if already authenticated
+//       next('/');
+//     } else {
+//       // Allow access if not authenticated
+//       next();
+//     }
+//   } 
+//   // For any other route
+//   else {
+//     next(); // Proceed as normal
+//   }
+// });
 
 export default router;

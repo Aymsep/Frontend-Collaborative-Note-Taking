@@ -14,7 +14,7 @@ export const useNotesStore = defineStore('notes', {
       this.loading = true;
       try {
         const response = await getMyNotes();
-        this.notes = response.data;
+        this.notes = response.data.notes;
       } catch (err) {
         this.error = 'Failed to fetch notes';
         console.error('Error fetching notes:', err);
@@ -28,7 +28,8 @@ export const useNotesStore = defineStore('notes', {
       this.loading = true;
       try {
         const response = await createNote(content);
-        this.notes.push(response.data);  // Add the new note to the notes list
+        console.log('response',response.data);
+        this.notes.push(response.data.note);  // Add the new note to the notes list
       } catch (err) {
         this.error = 'Failed to add note';
         console.error('Error adding note:', err);

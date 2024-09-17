@@ -55,6 +55,7 @@
   const router = useRouter()
 
   const handleLogin = async () => {
-    await login(form.value,router)
+    await login(form.value)
+    router.push('/')
   }
   </script>

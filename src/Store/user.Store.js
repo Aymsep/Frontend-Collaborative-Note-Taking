@@ -1,87 +1,86 @@
 import { defineStore } from 'pinia';
 import { login as loginApi, register as registerApi, getProfile } from '../api/auth.api';
-import { getMyNotes } from '../api/notes.api';
+import { saveToken, getToken, removeToken } from '../Utils/token.Utils';
 import { useRouter } from 'vue-router';
-import { nextTick } from 'vue';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    token: localStorage.getItem('token') || null,
+    token: getToken() || null,
     user: null,
     loading: false,
     error: null,
-    notes:[]
+    notes: [],
   }),
-  
+
   actions: {
     // Login action
-    async login(formData,router) {
-      this.loading = true;
-      this.error = null;
+    async login(formData) {
+      this.setLoading(true);
 
       try {
-        const response = await loginApi(formData);
-        const { access_token,user } = response.data;
-
-        // Save token and set state
-        this.token = access_token;
-        this.user = user;
-        console.log('user',this.user)
-        localStorage.setItem('token', access_token);
-
-        
-        router.push('/');
+        const { data } = await loginApi(formData);
+        this.handleAuthSuccess(data);
       } catch (err) {
-        this.error = err.response?.data?.message || 'Login failed';
+        this.handleError(err, 'Login failed');
       } finally {
-        this.loading = false;
+        this.setLoading(false);
       }
     },
 
     // Register action
-    async register(formData,router) {
-      this.loading = true;
-      this.error = null;
+    async register(formData) {
+      this.setLoading(true);
 
       try {
-        const response = await registerApi(formData);
-        const { access_token,user } = response.data;
-
-        // Save token and set state
-        this.token = access_token;
-        this.user = user;
-        localStorage.setItem('token', access_token);
-        // Redirect to dashboard
-        router.push('/');
+        const { data } = await registerApi(formData);
+        this.handleAuthSuccess(data);
       } catch (err) {
-        this.error = err.response?.data?.message || 'Registration failed';
+        this.handleError(err, 'Registration failed');
       } finally {
-        this.loading = false;
+        this.setLoading(false);
       }
     },
 
     // Fetch user profile
     async fetchProfile() {
-        try {
-            this.loading = true;
-            // Fetch profile
-            const profileResponse = await getProfile();
-            this.user = profileResponse.data;
-          } catch (err) {
-            console.error('Failed to fetch profile and notes', err);
-          }finally {
-            this.loading = false
+      this.setLoading(true);
+
+      try {
+        const { data } = await getProfile();
+        this.user = data;
+      } catch (err) {
+        this.handleError(err, 'Failed to fetch profile');
+      } finally {
+        this.setLoading(false);
       }
-      },
+    },
 
     // Logout action
-    logout(router) {
+    logout() {
       this.token = null;
       this.user = null;
       this.notes = [];
-      localStorage.removeItem('token');
-      
-      router.push('/login');  // Redirect after the state update is processed
+      removeToken();
+
+      const router = useRouter();
+      router.push('/login');
+    },
+
+    // Auth success handler
+    handleAuthSuccess({ access_token, user }) {
+      this.token = access_token;
+      this.user = user;
+      saveToken(access_token);
+    },
+
+    // Error handler
+    handleError(err, defaultMessage) {
+      this.error = err.response?.data?.message || defaultMessage;
+    },
+
+    // Set loading state
+    setLoading(state) {
+      this.loading = state;
     },
   },
 

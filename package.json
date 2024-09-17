@@ -10,12 +10,16 @@
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.9",
+    "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.7.7",
     "jwt-decode": "^4.0.0",
     "pinia": "^2.2.2",
+    "quill": "^2.0.2",
     "socket.io-client": "^4.7.5",
     "vue": "^3.4.37",
-    "vue-router": "^4.4.4"
+    "vue-quill": "^1.5.1",
+    "vue-router": "^4.4.4",
+    "vue3-quill": "^0.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",

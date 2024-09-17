@@ -1,22 +1,30 @@
 <template>
-   <Spinner :visible="loading" />
-   <ProfileDrop />
-   <NoteContainer />
-</template>
-
-<script setup>
-import NoteContainer from '../components/Notes/NoteContainer.VUE';
-import ProfileDrop from '../components/common/ProfileDrop.vue';
-import Spinner from '../components/common/Spinner.vue';
-import {useUserStore } from '../Store/user.Store'
-
-
-const {loading} = useUserStore();
-
-
-
-</script>
-
-<style lang="scss" scoped>
-
-</style>
+   <div class="dashboard-container">
+     <ProfileDrop />
+     <div class="content-container">
+       <NoteContainer />
+     </div>
+   </div>
+ </template>
+ 
+ <script setup>
+ import ProfileDrop from '../components/common/ProfileDrop.vue';
+ import NoteContainer from '../components/Notes/NoteContainer.vue';
+ 
+ </script>
+ 
+ <style scoped>
+ .dashboard-container {
+   background-color: #ececec;
+   height: 100vh;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+ }
+ 
+ .content-container {
+   width: 100%;
+   padding: 2rem;
+ }
+ </style>
+ 

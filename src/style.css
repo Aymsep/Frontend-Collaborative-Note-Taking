@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+h1 {
+    color:#6800ff !important;
+}
+svg{
+    color: white !important;
+    width:1.75rem !important;
+}
+
+.addNoteSign{
+    color:#6800ff !important;
+    font-size: 4.25rem !important;
+    cursor:pointer;
+}
+
+.addNoteParent{
+    box-shadow: 0px -7px 64px -19px rgba(104,0,255,0.75);
+    -webkit-box-shadow: 0px -7px 64px -19px rgba(104,0,255,0.75);
+    -moz-box-shadow: 0px -7px 64px -19px rgba(104,0,255,0.75);
+}
