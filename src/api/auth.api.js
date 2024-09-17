@@ -3,6 +3,7 @@ import api from './axiosInstance'
 
 
 export const login = async data =>{
+    console.log('data', data)
     return api.post('/auth/local/signin', data)
 }
 

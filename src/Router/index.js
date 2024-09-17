@@ -46,33 +46,33 @@ const router = createRouter({
 });
 
 // Global route guard to handle authentication and guest routes
-// router.beforeEach((to, from, next) => {
-//   const userStore = useUserStore(); // Access the user store
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore(); // Access the user store
 
-//   // Check if the route requires authentication
-//   if (to.matched.some((record) => record.meta.requiresAuth)) {
-//     if (!userStore.isAuthenticated) {
-//       // Redirect to login if not authenticated
-//       next('/login');
-//     } else {
-//       // Proceed to the route if authenticated
-//       next();
-//     }
-//   } 
-//   // Check if the route is for guests
-//   else if (to.matched.some((record) => record.meta.guest)) {
-//     if (userStore.isAuthenticated) {
-//       // Redirect to dashboard if already authenticated
-//       next('/');
-//     } else {
-//       // Allow access if not authenticated
-//       next();
-//     }
-//   } 
-//   // For any other route
-//   else {
-//     next(); // Proceed as normal
-//   }
-// });
+  // Check if the route requires authentication
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (!userStore.isAuthenticated) {
+      // Redirect to login if not authenticated
+      next('/login');
+    } else {
+      // Proceed to the route if authenticated
+      next();
+    }
+  } 
+  // Check if the route is for guests
+  else if (to.matched.some((record) => record.meta.guest)) {
+    if (userStore.isAuthenticated) {
+      // Redirect to dashboard if already authenticated
+      next('/');
+    } else {
+      // Allow access if not authenticated
+      next();
+    }
+  } 
+  // For any other route
+  else {
+    next(); // Proceed as normal
+  }
+});
 
 export default router;

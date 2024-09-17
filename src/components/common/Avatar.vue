@@ -12,27 +12,21 @@
   <script setup>
   import { ref } from 'vue';
   import {useUserStore} from '../../Store/user.Store'
-import { useRouter } from 'vue-router';
-  
-//   const props = defineProps({
-//     name: {
-//       type: String,
-//       required: true,
-//     },
-//   });
+  import { useRouter } from 'vue-router';
   
   const showModal = ref(false);
   const {logout,user} = useUserStore();
   const router = useRouter();
   
   const firstLetter = () => {
-    return user.username.charAt(0).toUpperCase();
+    return user?.username.charAt(0).toUpperCase();
   };
   
   const handleLogout = async () => {
     try {
-      await logout();
+      logout();
       router.push('/login');
+    //   console.log('Logged out');
     } catch (error) {
       console.log(error);
     }

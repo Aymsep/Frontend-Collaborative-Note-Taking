@@ -19,7 +19,9 @@ export const useUserStore = defineStore('user', {
 
       try {
         const { data } = await loginApi(formData);
+        console.log(data)
         this.handleAuthSuccess(data);
+        return
       } catch (err) {
         this.handleError(err, 'Login failed');
       } finally {
@@ -34,6 +36,7 @@ export const useUserStore = defineStore('user', {
       try {
         const { data } = await registerApi(formData);
         this.handleAuthSuccess(data);
+        return
       } catch (err) {
         this.handleError(err, 'Registration failed');
       } finally {
@@ -61,6 +64,7 @@ export const useUserStore = defineStore('user', {
       this.user = null;
       this.notes = [];
       removeToken();
+      return
     },
 
     // Auth success handler
@@ -68,6 +72,7 @@ export const useUserStore = defineStore('user', {
       this.token = access_token;
       this.user = user;
       saveToken(access_token);
+      return
     },
 
     // Error handler

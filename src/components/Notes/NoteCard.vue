@@ -118,7 +118,7 @@ const props = defineProps({
 
 
 // Reactive references
-const noteContent = ref(props.note.content);
+const noteContent = ref(props.note?.content);
 const noteStore = useNotesStore();
 const isDropdownOpen = ref(false);
 const isShareModalOpen = ref(false);
@@ -157,7 +157,7 @@ const setupWebSocketListeners = (noteId) => {
     noteStore.removeNoteWs(noteId);
   });
 
-  socket.on(`noteShared:${userStore.user.id}`, (data) => {
+  socket.on(`noteShared:${userStore.user?.id}`, (data) => {
     console.log('A note has been shared with you:', data.note);
     // noteStore.notes.push(data.note);  // Add shared note to the user's list
     noteStore.addNoteWs(data.note);
@@ -172,7 +172,7 @@ onUnmounted(() => {
 const cleanupWebSocketListeners = (noteId) => {
   socket.off(`noteUpdated:${noteId}`);
   socket.off(`noteDeleted:${noteId}`);
-  socket.off(`noteShared:${userStore.user.id}`);
+  socket.off(`noteShared:${userStore.user?.id}`);
 };
 
 // Watch for changes in note ID to re-setup WebSocket listeners

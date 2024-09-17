@@ -61,7 +61,8 @@
   const router = useRouter()  
 
   const handleRegister = async () => {
-    await register(form.value,router)
+    await register(form.value)
+    router.push('/login')
   }
 
 
