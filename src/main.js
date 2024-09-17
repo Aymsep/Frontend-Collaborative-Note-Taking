@@ -7,6 +7,9 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import { useUserStore } from './Store/user.Store.js'
+
+
 
 
 createApp(App)
@@ -28,3 +31,7 @@ createApp(App)
 .use(createPinia())
 .use(router)
 .mount('#app')
+
+const userStore = useUserStore();
+
+userStore.autoLogin();

@@ -10,7 +10,7 @@
       <div class="relative">
         <!-- Three dots icon -->
         <svg
-        style="color:#6800ff !important"
+          style="color:#6800ff !important"
           @click="toggleDropdown"
           xmlns="http://www.w3.org/2000/svg"
           class="h-[2.5rem] w-5 cursor-pointer text-gray-600"
@@ -46,7 +46,7 @@
     </div>
 
     <textarea
-    v-model="noteContent"
+      v-model="noteContent"
       ref="textarea"
       class="w-full h-full resize-none bg-transparent border-none"
       placeholder="Write your note here..."
@@ -70,13 +70,12 @@
         <h2 class="text-lg font-bold mb-4">Share this note with:</h2>
         <div class="flex flex-wrap">
           <div
-            v-for="user in users"
+            v-for="user in filteredOnlineUsers"
             :key="user.id"
             :class="['p-2 flex items-center cursor-pointer', { 'bg-blue-100': selectedUsers.includes(user.id) }]"
             @click="toggleUserSelection(user.id)"
           >
-            <!-- <img :src="getAvatar(user.email)" class="w-10 h-10 rounded-full mr-3" alt="User Avatar" /> -->
-            <span class="font-semibold">{{ user.username }}</span>
+            <span class="font-semibold">{{ user.username }}</span> <!-- Display username -->
           </div>
         </div>
         <div class="flex justify-end mt-4">
@@ -89,18 +88,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
-import { io } from 'socket.io-client';
-import { getUsers } from '../../api/user.api';
 import { useUserStore } from '../../Store/user.Store';
-import { useToast } from "vue-toastification"; // Import the toast hook
+import { useToast } from "vue-toastification";
 
 const toast = useToast();
 
+const props = defineProps({
+  note: Object,
+});
+
+// Reactive references
+const noteContent = ref(props.note?.content);
+const noteStore = useNotesStore();
+const isDropdownOpen = ref(false);
+const isShareModalOpen = ref(false);
+const selectedUsers = ref([]);
+const userStore = useUserStore();
+const userIdCurrent = userStore.getUserId;
+
 // Initialize WebSocket connection
-const socket = io('http://localhost:3000', { transports: ['websocket'] });
+const socket = userStore.socket;
 
 // Log WebSocket connection status
 socket.on('connect', () => {
@@ -111,20 +121,10 @@ socket.on('connect_error', (error) => {
   console.error('WebSocket connection error:', error);
 });
 
-const props = defineProps({
-  note: Object,
+// Computed to filter online users excluding the current user
+const filteredOnlineUsers = computed(() => {
+  return userStore.onlineUsers.filter(user => user.id !== userStore.getUserId);
 });
-
-
-
-// Reactive references
-const noteContent = ref(props.note?.content);
-const noteStore = useNotesStore();
-const isDropdownOpen = ref(false);
-const isShareModalOpen = ref(false);
-const users = ref([]);
-const selectedUsers = ref([]);
-const userStore = useUserStore();
 
 // Random light color generator
 const randomHexColor = () => {
@@ -134,45 +134,47 @@ const randomHexColor = () => {
 
 const randomBgColor = ref(randomHexColor());
 
-// Fetch users and set up WebSocket listeners
-onMounted(async () => {
-  const currentUserId =  userStore.getUserId;
-  console.log('Current User ID:', currentUserId);
-  const response = await getUsers();
-  const AllUsers = response.data;
-  users.value = AllUsers.filter(user => user.id !== currentUserId);
+// WebSocket listeners setup
+onMounted(() => {
+  // Listen for the 'onlineUsers' event and update the list of online users
+  socket.on('onlineUsers', (onlineUsers) => {
+    console.log('Online users:', onlineUsers);
+    const currentUserId = useUserStore().getUserId;
+    users.value = onlineUsers.filter(user => user.id !== currentUserId); // Exclude the current user
+  });
 
+  setupWebSocketListeners(props.note.id,userStore.getUserId);
 
-  setupWebSocketListeners(props.note.id);  // Set up WebSocket listeners
+  // Clean up socket event listeners on unmount
+  onUnmounted(() => {
+    cleanupWebSocketListeners(props.note.id,userStore.getUserId);
+    socket.off('onlineUsers');
+  });
 });
 
 // Set up WebSocket listeners
-const setupWebSocketListeners = (noteId) => {
+const setupWebSocketListeners = (noteId,userId) => {
   socket.on(`noteUpdated:${noteId}`, (updatedContent) => {
-    console.log('A note is editing');
+    console.log(`Note updated: ${noteId}`);
     noteContent.value = updatedContent;
   });
+
   socket.on(`noteDeleted:${noteId}`, () => {
-    console.log('A note is deleted');
+    console.log(`Note deleted: ${noteId}`);
     noteStore.removeNoteWs(noteId);
   });
 
-  socket.on(`noteShared:${userStore.user?.id}`, (data) => {
-    console.log('A note has been shared with you:', data.note);
-    // noteStore.notes.push(data.note);  // Add shared note to the user's list
+  socket.on(`noteShared:${userId}`, (data) => {
+    console.log(`Note shared with you:`, data.note);
     noteStore.addNoteWs(data.note);
   });
 };
 
 // Clean up WebSocket listeners
-onUnmounted(() => {
-  cleanupWebSocketListeners(props.note.id);
-});
-
 const cleanupWebSocketListeners = (noteId) => {
   socket.off(`noteUpdated:${noteId}`);
   socket.off(`noteDeleted:${noteId}`);
-  socket.off(`noteShared:${userStore.user?.id}`);
+  socket.off(`noteShared:${userStore.getUserId}`);
 };
 
 // Watch for changes in note ID to re-setup WebSocket listeners
@@ -180,6 +182,38 @@ watch(() => props.note.id, (newNoteId, oldNoteId) => {
   cleanupWebSocketListeners(oldNoteId);
   setupWebSocketListeners(newNoteId);
 });
+
+// Handle note content changes (with debounced save and WebSocket update)
+const debouncedSave = debounce(async (content) => {
+  await noteStore.editNote(props.note.id, content);
+  socket.emit('editNote', { noteId: props.note.id, content });
+}, 500);
+
+const handleContentChange = () => {
+  debouncedSave(noteContent.value);
+};
+
+// Handle note deletion
+const deleteNote = async () => {
+  try {
+    await noteStore.removeNote(props.note.id);
+    socket.emit('deleteNote', { noteId: props.note.id });
+    toast.success('Note deleted successfully');
+  } catch (e) {
+    toast.error(e.message || 'Failed to delete note');
+  }
+};
+
+// Share the note with selected users
+const shareNote = async () => {
+  await noteStore.shareNote({
+    NoteId: props.note.id,
+    targetId: selectedUsers.value[0],
+  });
+  socket.emit(`shareNote`, { noteId: props.note.id, sharedWith: selectedUsers.value });
+  toast.success("Note shared successfully");
+  closeShareModal();
+};
 
 // Toggle dropdown menu visibility
 const toggleDropdown = () => {
@@ -190,30 +224,13 @@ const closeDropdown = () => {
   isDropdownOpen.value = false;
 };
 
+// Open and close share modal
 const openShareModal = () => {
   isShareModalOpen.value = true;
 };
 
-// Handle note content changes (with debounced save and WebSocket update)
-const debouncedSave = debounce(async (content) => {
-  await noteStore.editNote(props.note.id, content);
-}, 500);
-
-const handleContentChange = () => {
-  debouncedSave(noteContent.value);
-  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });
-};
-
-// Handle note deletion
-const deleteNote = async () => {
-  try{
-    await noteStore.removeNote(props.note.id);
-    socket.emit('deleteNote', { noteId: props.note.id });
-    toast.success('Note deleted successfully');
-  }catch(e){
-    toast.error(e)
-  }
-  // console.log('Removed note:', noteStore.error);
+const closeShareModal = () => {
+  isShareModalOpen.value = false;
 };
 
 // Toggle user selection for sharing
@@ -225,25 +242,9 @@ const toggleUserSelection = (userId) => {
   }
 };
 
-// Share the note with selected users
-const shareNote = async () => {
-  await noteStore.shareNote({
-    NoteId: props.note.id,
-    targetId: selectedUsers.value[0],
-  });
-  socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
-  toast.success("Note shared successfully");
-  closeShareModal();
-};
-
-// Close the share modal
-const closeShareModal = () => {
-  isShareModalOpen.value = false;
-};
-
 // Format the date for display
 const formatDate = (isoDateString) => {
-  if(!isoDateString) return 'N/A'
+  if (!isoDateString) return 'N/A';
   const date = new Date(isoDateString);
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -266,14 +267,16 @@ textarea {
   min-height: 250px;
 }
 
-.noteDropdown{
-  background-color:#6800ff;
-  color:white;
+.noteDropdown {
+  background-color: #6800ff;
+  color: white;
 }
-.noteDropdown a{
+
+.noteDropdown a {
   font-weight: bold;
 }
-.noteDropdown a:hover{
+
+.noteDropdown a:hover {
   color: #6800ff;
   background-color: white;
 }
