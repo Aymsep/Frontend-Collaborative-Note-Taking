@@ -4,7 +4,7 @@
   class="flex-no-wrap relative flex w-full items-center justify-between  py-2 shadow-dark-mild dark:bg-surface-dark lg:flex-wrap lg:justify-start lg:py-4">
   <div class="flex w-full flex-wrap items-center justify-between px-3">
    
-
+    <h2 class="text-white text-4xl font-bold px-[2rem]" >Welcom Back, {{ username }}</h2>
     <!-- Collapsible navigation container -->
     <div
       class="!visible hidden flex-grow basis-[100%] items-center lg:!flex lg:basis-auto"
@@ -97,12 +97,13 @@
           data-twe-dropdown-toggle-ref
           aria-expanded="false">
           <!-- User avatar -->
-          <img
+          <!-- <img
             src="https://tecdn.b-cdn.net/img/new/avatars/2.jpg"
             class="rounded-full"
             style="height: 50px; width: 50px"
             alt=""
-            loading="lazy" />
+            loading="lazy" /> -->
+            <Avatar :name="username"/>
         </a>
         <!-- Second dropdown menu -->
         <ul
@@ -146,6 +147,7 @@
 import { ref } from 'vue';
 import { useUserStore } from '../../Store/user.Store';
 import { useRouter } from 'vue-router';
+import Avatar from './Avatar.vue';
 
 const isDropdownOpen = ref(false);
 const {user,logout} = useUserStore();
@@ -153,7 +155,8 @@ const router = useRouter();
 const handleLogout = async () => {
    logout(router);
 }
-console.log('user: ' + user.email)
+
+const username = ref(user.username);
 
 
 </script>

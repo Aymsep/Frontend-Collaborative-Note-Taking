@@ -1,6 +1,8 @@
 <template>
    <div class="dashboard-container">
      <ProfileDrop />
+     <!-- <button @click="showToast">Show Success Toast</button> -->
+     <Toast />
      <div class="content-container">
        <NoteContainer />
      </div>
@@ -10,7 +12,9 @@
  <script setup>
  import ProfileDrop from '../components/common/ProfileDrop.vue';
  import NoteContainer from '../components/Notes/NoteContainer.vue';
- 
+
+
+
  </script>
  
  <style scoped>

@@ -28,7 +28,6 @@ export const useNotesStore = defineStore('notes', {
       this.loading = true;
       try {
         const response = await createNote(content);
-        console.log('response',response.data);
         this.notes.push(response.data.note);  // Add the new note to the notes list
       } catch (err) {
         this.error = 'Failed to add note';
@@ -42,15 +41,14 @@ export const useNotesStore = defineStore('notes', {
     async removeNote(noteId) {
       this.loading = true;
       try {
-        await deleteNote(noteId);
+        const deletedNote = await deleteNote(noteId);
         const noteIndex = this.notes.findIndex(note => note.id === noteId);
         if (noteIndex !== -1) {
           this.notes.splice(noteIndex, 1);  // Remove the note by index
-          console.log('note',this.notes)
         }
       } catch (err) {
-        this.error = 'Failed to delete note';
-        console.error('Error deleting note:', err);
+        this.error = err.response.data.message;
+        throw err.response.data.message;
       } finally {
         this.loading = false;
       }
