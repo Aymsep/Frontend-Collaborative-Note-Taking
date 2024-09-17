@@ -1,162 +1,110 @@
 <template>
   <nav
-  style="background-color: #6800ff;"
-  class="flex-no-wrap relative flex w-full items-center justify-between  py-2 shadow-dark-mild dark:bg-surface-dark lg:flex-wrap lg:justify-start lg:py-4">
-  <div class="flex w-full flex-wrap items-center justify-between px-3">
-   
-    <h2 class="text-white text-4xl font-bold px-[2rem]" >Welcom Back, {{ username }}</h2>
-    <!-- Collapsible navigation container -->
-    <div
-      class="!visible hidden flex-grow basis-[100%] items-center lg:!flex lg:basis-auto"
-      id="navbarSupportedContent12"
-      data-twe-collapse-item>
-  
-      <!-- Left navigation links -->
-    </div>
+    style="background-color: #6800ff;"
+    class="flex-no-wrap relative flex w-full items-center justify-between py-2 shadow-dark-mild dark:bg-surface-dark lg:flex-wrap lg:justify-start lg:py-4">
+    <div class="flex w-full flex-wrap items-center justify-between px-3">
+      <h2 class="text-white text-4xl font-bold px-[2rem]">Welcome Back, {{ username }}</h2>
 
-    <!-- Right elements -->
-    <div class="relative flex items-center">
- 
-
-      <!-- Container with two dropdown menus -->
-      <div
-        class="relative"
-        data-twe-dropdown-ref
-        data-twe-dropdown-alignment="end">
-        <!-- First dropdown trigger -->
+      <div class="relative flex items-center">
+        <!-- Notification Icon with Counter -->
         <a
-          class="me-4 flex items-center text-secondary-500 transition duration-200 hover:text-secondary-600/70 hover:ease-in-out focus:text-secondary-600/70 active:text-secondary-600/70 motion-reduce:transition-none dark:text-secondary-500 dark:hover:text-secondary-500/80 dark:focus:text-secondary-500/80 dark:active:text-secondary-500/80"
+          class="me-4 flex items-center text-secondary-500 transition duration-200 hover:text-secondary-600/70 hover:ease-in-out focus:text-secondary-600/70 active:text-secondary-600/70"
           href="#"
-          id="dropdownMenuButton1"
           role="button"
-          data-twe-dropdown-toggle-ref
-          aria-expanded="false">
-          <!-- Dropdown trigger icon -->
+          @click="toggleModal"
+        >
+          <!-- Notification Icon -->
           <span class="[&>svg]:w-5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              fill="currentColor">
+              fill="currentColor"
+            >
               <path
                 fill-rule="evenodd"
                 d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"
+              />
             </svg>
           </span>
+
           <!-- Notification counter -->
           <span
+            v-if="notificationCount > 0"
             class="absolute -mt-4 ms-2.5 rounded-full bg-danger px-[0.35em] pb-[1.15em] text-[1.2rem] font-bold leading-none text-white"
-            >1</span
           >
+            {{ notificationCount }}
+          </span>
         </a>
-        
-        <!-- First dropdown menu -->
-        <ul
-          class="absolute z-[1000] float-left m-0 hidden min-w-max list-none overflow-hidden rounded-lg border-none bg-white bg-clip-padding text-left text-base shadow-lg data-[twe-dropdown-show]:block dark:bg-surface-dark"
-          aria-labelledby="dropdownMenuButton1"
-          data-twe-dropdown-menu-ref>
-          <!-- First dropdown menu items -->
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Action</a
-            >
-          </li>
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Another action</a
-            >
-          </li>
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Something else here</a
-            >
-          </li>
-        </ul>
+
+        <!-- Modal for showing notifications -->
+        <div v-if="showModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white p-6 rounded-md w-96">
+            <h2 class="text-lg font-bold mb-4">Notifications</h2>
+            <ul>
+              <li v-for="(message, index) in notifications" :key="index" class="mb-2">
+                {{ message }}
+              </li>
+            </ul>
+            <div class="flex justify-end mt-4">
+              <button @click="closeModal" class="px-4 py-2 bg-blue-600 text-white rounded-md">Close</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Second dropdown container -->
-      <div
-        class="relative"
-        data-twe-dropdown-ref
-        data-twe-dropdown-alignment="end">
-        <!-- Second dropdown trigger -->
+      <!-- Avatar -->
+      <div class="relative">
         <a
-          class="flex items-center whitespace-nowrap transition duration-150 ease-in-out motion-reduce:transition-none"
+          class="flex items-center whitespace-nowrap"
           href="#"
-          id="dropdownMenuButton2"
           role="button"
-          data-twe-dropdown-toggle-ref
-          aria-expanded="false">
-          <!-- User avatar -->
-          <!-- <img
-            src="https://tecdn.b-cdn.net/img/new/avatars/2.jpg"
-            class="rounded-full"
-            style="height: 50px; width: 50px"
-            alt=""
-            loading="lazy" /> -->
-            <Avatar :name="username"/>
+        >
+          <Avatar :name="username" />
         </a>
-        <!-- Second dropdown menu -->
-        <ul
-          class="absolute z-[1000] float-left m-0 hidden min-w-max list-none overflow-hidden rounded-lg border-none bg-white bg-clip-padding text-left text-base shadow-lg data-[twe-dropdown-show]:block dark:bg-surface-dark"
-          aria-labelledby="dropdownMenuButton2"
-          data-twe-dropdown-menu-ref>
-          <!-- Second dropdown menu items -->
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Action</a
-            >
-          </li>
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Another action</a
-            >
-          </li>
-          <li>
-            <a
-              class="block w-full whitespace-nowrap bg-white px-4 py-2 text-sm font-normal text-neutral-700 hover:bg-zinc-200/60 focus:bg-zinc-200/60 focus:outline-none active:bg-zinc-200/60 active:no-underline dark:bg-surface-dark dark:text-white dark:hover:bg-neutral-800/25 dark:focus:bg-neutral-800/25 dark:active:bg-neutral-800/25"
-              href="#"
-              data-twe-dropdown-item-ref
-              >Something else here</a
-            >
-          </li>
-        </ul>
       </div>
-      
     </div>
-  </div>
-</nav>
+  </nav>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useUserStore } from '../../Store/user.Store';
-import { useRouter } from 'vue-router';
 import Avatar from './Avatar.vue';
 
-const isDropdownOpen = ref(false);
-const {user,logout} = useUserStore();
-const router = useRouter();
-
-
+const { user, socket } = useUserStore();
 const username = ref(user.username);
 
+const notificationCount = ref(0);  // Notification count starts with 1
+const notifications = ref([]);
+const showModal = ref(false);
 
+// Toggle modal visibility
+const toggleModal = () => {
+  showModal.value = !showModal.value;
+  if (showModal.value) {
+    notificationCount.value = 0; // Reset notification count when opening the modal
+  }
+};
+
+// Close modal
+const closeModal = () => {
+  showModal.value = false;
+};
+
+// Listen for notifications via WebSocket
+onMounted(() => {
+  // Listen for incoming notifications
+  socket.on(`noteNotification:${user.id}`, (data) => {
+    notifications.value.push(data.message);
+    notificationCount.value += 1;
+  });
+
+  // Clean up WebSocket listener on component unmount
+  return () => {
+    socket.off(`noteNotification:${user.id}`);
+  };
+});
 </script>
 
 <style scoped>
@@ -172,4 +120,3 @@ const username = ref(user.username);
   font-size: 1.2rem;
 }
 </style>
-
