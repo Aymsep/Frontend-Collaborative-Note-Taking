@@ -48,7 +48,7 @@
     <!-- Editable note content inside the contenteditable div -->
     <div
       ref="contentEditableDiv"
-      class="w-full h-full resize-none bg-transparent border-none"
+      class="editortext w-full h-full resize-none bg-transparent border-none"
       contenteditable="true"
       @input="handleContentChange"
       @keydown="handleContentChange"
@@ -289,4 +289,11 @@ textarea {
   color: #6800ff;
   background-color: white;
 }
+
+
+.editortext:focus {
+  outline: none;
+
+}
+
 </style>
