@@ -96,7 +96,7 @@ import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
 import { useUserStore } from '../../Store/user.Store';
 import { useToast } from 'vue-toastification';
-
+import {formatDate} from '../../Utils/formatDate';
 const toast = useToast();
 const props = defineProps({ note: Object });
 
@@ -200,19 +200,7 @@ const toggleUserSelection = (userId) => {
   }
 };
 
-// Format the date for display
-const formatDate = (isoDateString) => {
-  if (!isoDateString) return 'N/A';
-  const date = new Date(isoDateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true,
-  }).format(date);
-};
+
 </script>
 
 <style scoped>
