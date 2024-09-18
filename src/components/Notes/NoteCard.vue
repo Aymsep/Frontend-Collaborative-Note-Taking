@@ -39,24 +39,27 @@
           <a
             href="#"
             @click="openShareModal"
-            class="block px-4 py-2 "
+            class="block px-4 py-2"
           >Share</a>
         </div>
       </div>
     </div>
 
-    <textarea
-      v-model="noteContent"
-      ref="textarea"
+    <!-- Editable note content inside the contenteditable div -->
+    <div
+      ref="contentEditableDiv"
       class="w-full h-full resize-none bg-transparent border-none"
-      placeholder="Write your note here..."
+      contenteditable="true"
       @input="handleContentChange"
-    >{{ noteContent }}</textarea>
+      @keydown="handleContentChange"
+    ></div>
 
+    <!-- Text Styling Options -->
     <div class="flex justify-between items-center mt-4">
       <div>
         <button @click="applyStyle('bold')" class="text-gray-600 hover:text-gray-900">Bold</button>
         <button @click="applyStyle('italic')" class="ml-2 text-gray-600 hover:text-gray-900">Italic</button>
+        <button @click="applyStyle('foreColor', '#ff0000')" class="ml-2 text-gray-600 hover:text-gray-900">Red</button>
       </div>
       <span class="text-sm text-gray-500">{{ formatDate(note.createdAt) }}</span>
     </div>
@@ -101,7 +104,8 @@ const props = defineProps({
 });
 
 // Reactive references
-const noteContent = ref(props.note?.content);
+const noteContent = ref(props.note?.content || "");
+const contentEditableDiv = ref(null);
 const noteStore = useNotesStore();
 const isDropdownOpen = ref(false);
 const isShareModalOpen = ref(false);
@@ -109,24 +113,15 @@ const selectedUsers = ref([]);
 const userStore = useUserStore();
 const userIdCurrent = userStore.getUserId;
 
-// Initialize WebSocket connection
+// WebSocket connection
 const socket = userStore.socket;
-
-// Log WebSocket connection status
-socket.on('connect', () => {
-  console.log('WebSocket connection established');
-});
-
-socket.on('connect_error', (error) => {
-  console.error('WebSocket connection error:', error);
-});
 
 // Computed to filter online users excluding the current user
 const filteredOnlineUsers = computed(() => {
-  return userStore.onlineUsers.filter(user => user.id !== userStore.getUserId);
+  return userStore.onlineUsers.filter(user => user.id !== userIdCurrent);
 });
 
-// Random light color generator
+// Random light background color
 const randomHexColor = () => {
   const getLightHex = () => Math.floor(Math.random() * 128 + 128).toString(16).padStart(2, '0');
   return `#${getLightHex()}${getLightHex()}${getLightHex()}`;
@@ -134,64 +129,77 @@ const randomHexColor = () => {
 
 const randomBgColor = ref(randomHexColor());
 
+// Apply styles to the contentEditable div
+const applyStyle = (command, value = null) => {
+  document.execCommand(command, false, value);
+};
+
+// Handle content change with WebSocket update and debounce
+const debouncedSave = debounce(async (content) => {
+  await noteStore.editNote(props.note.id, content);
+}, 500);
+
+// Utility functions to manage cursor position
+const getCaretPosition = () => {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return null;
+  return selection.getRangeAt(0);
+};
+
+const setCaretPosition = (range) => {
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
+const handleContentChange = () => {
+  const caretPosition = getCaretPosition(); // Get the current caret position
+
+  const htmlContent = contentEditableDiv.value.innerHTML; // Get the HTML content
+  noteContent.value = htmlContent; // Update the note content
+  socket.emit('editNote', { noteId: props.note.id, content: htmlContent });
+
+  debouncedSave(htmlContent);
+
+  setCaretPosition(caretPosition); // Restore the caret position
+};
+
 // WebSocket listeners setup
 onMounted(() => {
-  // Listen for the 'onlineUsers' event and update the list of online users
-  socket.on('onlineUsers', (onlineUsers) => {
-    console.log('Online users:', onlineUsers);
-    const currentUserId = useUserStore().getUserId;
-    users.value = onlineUsers.filter(user => user.id !== currentUserId); // Exclude the current user
-  });
+  setupWebSocketListeners(props.note.id, userIdCurrent);
 
-  setupWebSocketListeners(props.note.id,userStore.getUserId);
+  // Set initial content when mounted
+  if (contentEditableDiv.value) {
+    contentEditableDiv.value.innerHTML = noteContent.value;
+  }
 
-  // Clean up socket event listeners on unmount
+  // Clean up listeners on unmount
   onUnmounted(() => {
-    cleanupWebSocketListeners(props.note.id,userStore.getUserId);
-    socket.off('onlineUsers');
+    cleanupWebSocketListeners(props.note.id);
   });
 });
 
-// Set up WebSocket listeners
-const setupWebSocketListeners = (noteId,userId) => {
+const setupWebSocketListeners = (noteId, userId) => {
   socket.on(`noteUpdated:${noteId}`, (updatedContent) => {
-    console.log(`Note updated: ${noteId}`);
     noteContent.value = updatedContent;
+    if (contentEditableDiv.value) {
+      contentEditableDiv.value.innerHTML = updatedContent; // Sync the content with updates
+    }
   });
 
   socket.on(`noteDeleted:${noteId}`, () => {
-    console.log(`Note deleted: ${noteId}`);
     noteStore.removeNoteWs(noteId);
   });
 
   socket.on(`noteShared:${userId}`, (data) => {
-    console.log(`Note shared with you:`, data.note);
     noteStore.addNoteWs(data.note);
   });
 };
 
-// Clean up WebSocket listeners
 const cleanupWebSocketListeners = (noteId) => {
   socket.off(`noteUpdated:${noteId}`);
   socket.off(`noteDeleted:${noteId}`);
-  socket.off(`noteShared:${userStore.getUserId}`);
-};
-
-// Watch for changes in note ID to re-setup WebSocket listeners
-watch(() => props.note.id, (newNoteId, oldNoteId) => {
-  cleanupWebSocketListeners(oldNoteId);
-  setupWebSocketListeners(newNoteId);
-});
-
-// Handle note content changes (with debounced save and WebSocket update)
-const debouncedSave = debounce(async (content) => {
-  // socket.emit('editNote', { noteId: props.note.id, content });
-  await noteStore.editNote(props.note.id, content);
-}, 500);
-
-const handleContentChange = () => {
-  socket.emit('editNote', { noteId: props.note.id, content:noteContent.value });
-  debouncedSave(noteContent.value);
+  socket.off(`noteShared:${userIdCurrent}`);
 };
 
 // Handle note deletion
@@ -225,7 +233,7 @@ const closeDropdown = () => {
   isDropdownOpen.value = false;
 };
 
-// Open and close share modal
+// Modal handling
 const openShareModal = () => {
   isShareModalOpen.value = true;
 };
