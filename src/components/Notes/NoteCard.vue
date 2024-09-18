@@ -39,7 +39,7 @@
           <a
             href="#"
             @click="openShareModal"
-            class="block px-4 py-2"
+            class="block px-4 py-2 "
           >Share</a>
         </div>
       </div>
@@ -78,7 +78,7 @@
             :class="['p-2 flex items-center cursor-pointer', { 'bg-blue-100': selectedUsers.includes(user.id) }]"
             @click="toggleUserSelection(user.id)"
           >
-            <span class="font-semibold">{{ user.username }}</span> <!-- Display username -->
+            <span class="font-semibold">{{ user.username }}</span>
           </div>
         </div>
         <div class="flex justify-end mt-4">
@@ -91,43 +91,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
 import { useUserStore } from '../../Store/user.Store';
-import { useToast } from "vue-toastification";
+import { useToast } from 'vue-toastification';
 
 const toast = useToast();
-
-const props = defineProps({
-  note: Object,
-});
+const props = defineProps({ note: Object });
 
 // Reactive references
+const contentEditableDiv = ref(null); // Correctly defined ref
 const noteContent = ref(props.note?.content || "");
-const contentEditableDiv = ref(null);
 const noteStore = useNotesStore();
 const isDropdownOpen = ref(false);
 const isShareModalOpen = ref(false);
 const selectedUsers = ref([]);
 const userStore = useUserStore();
-const userIdCurrent = userStore.getUserId;
+
+// Computed to filter online users excluding the current user
+const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => user.id !== userStore.getUserId));
 
 // WebSocket connection
 const socket = userStore.socket;
 
-// Computed to filter online users excluding the current user
-const filteredOnlineUsers = computed(() => {
-  return userStore.onlineUsers.filter(user => user.id !== userIdCurrent);
-});
-
 // Random light background color
-const randomHexColor = () => {
-  const getLightHex = () => Math.floor(Math.random() * 128 + 128).toString(16).padStart(2, '0');
-  return `#${getLightHex()}${getLightHex()}${getLightHex()}`;
-};
-
-const randomBgColor = ref(randomHexColor());
+const randomBgColor = ref(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
 
 // Apply styles to the contentEditable div
 const applyStyle = (command, value = null) => {
@@ -139,68 +128,41 @@ const debouncedSave = debounce(async (content) => {
   await noteStore.editNote(props.note.id, content);
 }, 500);
 
-// Utility functions to manage cursor position
-const getCaretPosition = () => {
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return null;
-  return selection.getRangeAt(0);
-};
-
-const setCaretPosition = (range) => {
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-};
-
+// Handle content changes and apply debounce save
 const handleContentChange = () => {
-  const caretPosition = getCaretPosition(); // Get the current caret position
-
-  const htmlContent = contentEditableDiv.value.innerHTML; // Get the HTML content
-  noteContent.value = htmlContent; // Update the note content
-  socket.emit('editNote', { noteId: props.note.id, content: htmlContent });
-
-  debouncedSave(htmlContent);
-
-  setCaretPosition(caretPosition); // Restore the caret position
+  const htmlContent = contentEditableDiv.value.innerHTML; // Get the content from the contentEditable div
+  noteContent.value = htmlContent; // Update the reactive noteContent
+  socket.emit('editNote', { noteId: props.note.id, content: htmlContent }); // Emit WebSocket event
+  debouncedSave(htmlContent); // Save with debounce
 };
 
-// WebSocket listeners setup
+// Set up WebSocket listeners
 onMounted(() => {
-  setupWebSocketListeners(props.note.id, userIdCurrent);
-
-  // Set initial content when mounted
   if (contentEditableDiv.value) {
-    contentEditableDiv.value.innerHTML = noteContent.value;
+    contentEditableDiv.value.innerHTML = noteContent.value; // Initialize content
   }
 
-  // Clean up listeners on unmount
-  onUnmounted(() => {
-    cleanupWebSocketListeners(props.note.id);
-  });
-});
-
-const setupWebSocketListeners = (noteId, userId) => {
-  socket.on(`noteUpdated:${noteId}`, (updatedContent) => {
+  socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
     noteContent.value = updatedContent;
     if (contentEditableDiv.value) {
-      contentEditableDiv.value.innerHTML = updatedContent; // Sync the content with updates
+      contentEditableDiv.value.innerHTML = updatedContent; // Sync content if updated
     }
   });
 
-  socket.on(`noteDeleted:${noteId}`, () => {
-    noteStore.removeNoteWs(noteId);
+  socket.on(`noteDeleted:${props.note.id}`, () => {
+    noteStore.removeNoteWs(props.note.id);
   });
 
-  socket.on(`noteShared:${userId}`, (data) => {
+  socket.on(`noteShared:${userStore.getUserId}`, (data) => {
     noteStore.addNoteWs(data.note);
   });
-};
 
-const cleanupWebSocketListeners = (noteId) => {
-  socket.off(`noteUpdated:${noteId}`);
-  socket.off(`noteDeleted:${noteId}`);
-  socket.off(`noteShared:${userIdCurrent}`);
-};
+  onUnmounted(() => {
+    socket.off(`noteUpdated:${props.note.id}`);
+    socket.off(`noteDeleted:${props.note.id}`);
+    socket.off(`noteShared:${userStore.getUserId}`);
+  });
+});
 
 // Handle note deletion
 const deleteNote = async () => {
@@ -219,28 +181,15 @@ const shareNote = async () => {
     NoteId: props.note.id,
     targetId: selectedUsers.value[0],
   });
-  socket.emit(`shareNote`, { noteId: props.note.id, sharedWith: selectedUsers.value });
-  toast.success("Note shared successfully");
+  socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
+  toast.success('Note shared successfully');
   closeShareModal();
 };
 
-// Toggle dropdown menu visibility
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-const closeDropdown = () => {
-  isDropdownOpen.value = false;
-};
-
-// Modal handling
-const openShareModal = () => {
-  isShareModalOpen.value = true;
-};
-
-const closeShareModal = () => {
-  isShareModalOpen.value = false;
-};
+// Toggle dropdown and modal visibility
+const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value;
+const openShareModal = () => isShareModalOpen.value = true;
+const closeShareModal = () => isShareModalOpen.value = false;
 
 // Toggle user selection for sharing
 const toggleUserSelection = (userId) => {
@@ -290,10 +239,7 @@ textarea {
   background-color: white;
 }
 
-
 .editortext:focus {
   outline: none;
-
 }
-
 </style>
