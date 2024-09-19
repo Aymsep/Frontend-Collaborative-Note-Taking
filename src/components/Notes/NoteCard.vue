@@ -1,6 +1,6 @@
 <template>
   <div
-    id="Card"
+    :id="`Card-${note.id}`"
     :style="{ backgroundColor: randomBgColor }"
     class="relative flex justify-between flex-col p-4 rounded-md shadow-md"
     @mouseleave="handleMouseLeave"
@@ -44,29 +44,20 @@
           <a
             href="#"
             @click="openShareModal"
-            class="block px-4 py-2 "
+            class="block px-4 py-2"
           >Share</a>
         </div>
       </div>
     </div>
 
-    <!-- Editable note content inside the contenteditable div -->
-    <!-- <div
-      ref="contentEditableDiv"
-      class="editortext w-full h-full resize-none bg-transparent border-none"
-      contenteditable="true"
-      @input="handleContentChange"
-      @keydown="handleContentChange"
-    ></div> -->
     <!-- Quill Editor for rich text editing -->
     <quill-editor
-    id="editortext"
+      :id="`editor-${note.id}`"
       v-model="noteContent"
       :options="editorOptions"
       class="editortext w-full h-full no-border"
       @input="handleContentChange"
     />
-
 
     <!-- Text Styling Options -->
     <div class="flex justify-between items-center mt-4">
@@ -106,15 +97,14 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
 import { useUserStore } from '../../Store/user.Store';
 import { useToast } from 'vue-toastification';
 import { formatDate } from '../../Utils/formatDate';
 import { QuillEditor } from '@vueup/vue-quill';
-import '@vueup/vue-quill/dist/vue-quill.snow.css'; // Optional: Quill snow theme CSS
-
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 const toast = useToast();
 const props = defineProps({ note: Object });
@@ -133,9 +123,7 @@ const editorOptions = {
   theme: 'snow', // Default theme for Quill
 };
 
-
 // Reactive references
-const contentEditableDiv = ref(null); // Correctly defined ref
 const noteContent = ref(props.note?.content || "");
 const noteStore = useNotesStore();
 const isDropdownOpen = ref(false);
@@ -143,8 +131,6 @@ const isShareModalOpen = ref(false);
 const selectedUsers = ref([]);
 const userStore = useUserStore();
 const isLoading = ref(false); // Loading state
-// const t = ref('qc')
-const text  = document.getElementById('editortext');
 
 // Computed to filter online users excluding the current user
 const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => user.id !== userStore.getUserId));
@@ -164,41 +150,40 @@ const randomLightColor = () => {
 
 const randomBgColor = ref(randomLightColor());
 
-// Apply styles to the contentEditable div
-const applyStyle = (command, value = null) => {
-  document.execCommand(command, false, value);
-};
-
 // Handle content change with WebSocket update and debounce
 const debouncedSave = debounce(async (content) => {
   await noteStore.editNote(props.note.id, content);
 }, 500);
 
-// Handle content changes and apply debounce save
-// const handleContentChange = () => {
-//   const htmlContent = contentEditableDiv.value.innerHTML; // Get the content from the contentEditable div
-//   noteContent.value = htmlContent; // Update the reactive noteContent
-//   socket.emit('editNote', { noteId: props.note.id, content: htmlContent }); // Emit WebSocket event
-//   debouncedSave(htmlContent); // Save with debounce
-// };
 const handleContentChange = () => {
-  noteContent.value = editortext.children[0].innerHTML; // Update the reactive noteContent
-  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });
-  debouncedSave(noteContent.value);
+  const quillEditor = document.querySelector(`#editor-${props.note.id} .ql-editor`);
+
+  if (quillEditor) {
+    // Get the HTML content of the specific Quill editor instance
+    const quillEditorHtml = quillEditor.innerHTML;
+
+    console.log('Sending HTML content:', quillEditorHtml);
+
+    // Emit the HTML content as a string through WebSocket
+    socket.emit('editNote', { noteId: props.note.id, content: quillEditorHtml });
+
+    // Debounced save with the HTML content
+    debouncedSave(quillEditorHtml);
+  }
 };
 
 // Set up WebSocket listeners
 onMounted(() => {
-  if (props.note.content) {
-    editortext.children[0].innerHTML = props.note.content;
-    // contentEditableDiv.value.innerHTML = noteContent.value; // Initialize content
+  const quillEditor = document.querySelector(`#editor-${props.note.id} .ql-editor`);
 
+  if (quillEditor && props.note.content) {
+    quillEditor.innerHTML = props.note.content; // Initialize content for the current note
   }
 
   socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
     noteContent.value = updatedContent;
-    if (props.note.content) {
-      editortext.children[0].innerHTML  = updatedContent; // Sync content if updated
+    if (quillEditor) {
+      quillEditor.innerHTML = updatedContent; // Sync content if updated
     }
   });
 
