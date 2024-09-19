@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../Store/user.Store';
 import { useNotesStore } from '../Store/note.Store';
+import Dashboard from '../Views/Dashboard.vue'
 
 const routes = [
   {
@@ -18,7 +19,7 @@ const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: () => import('../Views/Dashboard.vue'),
+    component: Dashboard,
     meta: { requiresAuth: true }, // Only allow authenticated users
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();

@@ -51,13 +51,22 @@
     </div>
 
     <!-- Editable note content inside the contenteditable div -->
-    <div
+    <!-- <div
       ref="contentEditableDiv"
       class="editortext w-full h-full resize-none bg-transparent border-none"
       contenteditable="true"
       @input="handleContentChange"
       @keydown="handleContentChange"
-    ></div>
+    ></div> -->
+    <!-- Quill Editor for rich text editing -->
+    <quill-editor
+    id="editortext"
+      v-model="noteContent"
+      :options="editorOptions"
+      class="editortext w-full h-full no-border"
+      @input="handleContentChange"
+    />
+
 
     <!-- Text Styling Options -->
     <div class="flex justify-between items-center mt-4">
@@ -103,9 +112,27 @@ import { debounce } from '../../Utils/debounce';
 import { useUserStore } from '../../Store/user.Store';
 import { useToast } from 'vue-toastification';
 import { formatDate } from '../../Utils/formatDate';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css'; // Optional: Quill snow theme CSS
+
 
 const toast = useToast();
 const props = defineProps({ note: Object });
+
+// Quill editor options
+const editorOptions = {
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline'], // Basic formatting options
+      [{ 'color': [] }, { 'background': [] }], // Color and background options
+      [{ 'align': [] }], // Alignment options
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }], // List options
+      ['clean'], // Clear formatting
+    ],
+  },
+  theme: 'snow', // Default theme for Quill
+};
+
 
 // Reactive references
 const contentEditableDiv = ref(null); // Correctly defined ref
@@ -116,6 +143,8 @@ const isShareModalOpen = ref(false);
 const selectedUsers = ref([]);
 const userStore = useUserStore();
 const isLoading = ref(false); // Loading state
+// const t = ref('qc')
+const text  = document.getElementById('editortext');
 
 // Computed to filter online users excluding the current user
 const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => user.id !== userStore.getUserId));
@@ -146,23 +175,30 @@ const debouncedSave = debounce(async (content) => {
 }, 500);
 
 // Handle content changes and apply debounce save
+// const handleContentChange = () => {
+//   const htmlContent = contentEditableDiv.value.innerHTML; // Get the content from the contentEditable div
+//   noteContent.value = htmlContent; // Update the reactive noteContent
+//   socket.emit('editNote', { noteId: props.note.id, content: htmlContent }); // Emit WebSocket event
+//   debouncedSave(htmlContent); // Save with debounce
+// };
 const handleContentChange = () => {
-  const htmlContent = contentEditableDiv.value.innerHTML; // Get the content from the contentEditable div
-  noteContent.value = htmlContent; // Update the reactive noteContent
-  socket.emit('editNote', { noteId: props.note.id, content: htmlContent }); // Emit WebSocket event
-  debouncedSave(htmlContent); // Save with debounce
+  noteContent.value = editortext.children[0].innerHTML; // Update the reactive noteContent
+  socket.emit('editNote', { noteId: props.note.id, content: noteContent.value });
+  debouncedSave(noteContent.value);
 };
 
 // Set up WebSocket listeners
 onMounted(() => {
-  if (contentEditableDiv.value) {
-    contentEditableDiv.value.innerHTML = noteContent.value; // Initialize content
+  if (props.note.content) {
+    editortext.children[0].innerHTML = props.note.content;
+    // contentEditableDiv.value.innerHTML = noteContent.value; // Initialize content
+
   }
 
   socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
     noteContent.value = updatedContent;
-    if (contentEditableDiv.value) {
-      contentEditableDiv.value.innerHTML = updatedContent; // Sync content if updated
+    if (props.note.content) {
+      editortext.children[0].innerHTML  = updatedContent; // Sync content if updated
     }
   });
 
