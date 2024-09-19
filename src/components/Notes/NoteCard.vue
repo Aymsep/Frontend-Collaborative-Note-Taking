@@ -2,7 +2,7 @@
   <div
     :id="`Card-${note.id}`"
     :style="{ backgroundColor: randomBgColor }"
-    class="relative flex justify-between flex-col p-4 rounded-md shadow-md"
+    class="relative flex justify-between flex-col p-4 rounded-md shadow-md h-[260px]"
     @mouseleave="handleMouseLeave"
   >
     <!-- Show loader when isLoading is true -->
@@ -281,6 +281,9 @@ textarea {
   background-color: white;
 }
 
+.editortext{
+  height: 250px !important;
+}
 .editortext:focus {
   outline: none;
 }
