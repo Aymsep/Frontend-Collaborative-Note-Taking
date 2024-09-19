@@ -5,6 +5,11 @@
     class="relative flex justify-between flex-col p-4 rounded-md shadow-md"
     @mouseleave="handleMouseLeave"
   >
+    <!-- Show loader when isLoading is true -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+
     <!-- Three dot menu with focus functionality -->
     <div class="absolute top-2 right-2">
       <div class="relative">
@@ -97,7 +102,8 @@ import { useNotesStore } from '../../Store/note.Store';
 import { debounce } from '../../Utils/debounce';
 import { useUserStore } from '../../Store/user.Store';
 import { useToast } from 'vue-toastification';
-import {formatDate} from '../../Utils/formatDate';
+import { formatDate } from '../../Utils/formatDate';
+
 const toast = useToast();
 const props = defineProps({ note: Object });
 
@@ -109,6 +115,7 @@ const isDropdownOpen = ref(false);
 const isShareModalOpen = ref(false);
 const selectedUsers = ref([]);
 const userStore = useUserStore();
+const isLoading = ref(false); // Loading state
 
 // Computed to filter online users excluding the current user
 const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => user.id !== userStore.getUserId));
@@ -127,7 +134,6 @@ const randomLightColor = () => {
 };
 
 const randomBgColor = ref(randomLightColor());
-
 
 // Apply styles to the contentEditable div
 const applyStyle = (command, value = null) => {
@@ -164,53 +170,50 @@ onMounted(() => {
     noteStore.removeNoteWs(props.note.id);
   });
 
-  // socket.on(`noteShared:${userStore.getUserId}`, (data) => {
-  //   noteStore.addNoteWs(data.note);
-  // });
-
   onUnmounted(() => {
     socket.off(`noteUpdated:${props.note.id}`);
     socket.off(`noteDeleted:${props.note.id}`);
-    // socket.off(`noteShared:${userStore.getUserId}`);
   });
 });
 
-// Handle note deletion
+// Handle note deletion with loading
 const deleteNote = async () => {
   try {
+    isLoading.value = true; // Start loading animation
     await noteStore.removeNote(props.note.id);
     isDropdownOpen.value = false; // Close dropdown after delete
     socket.emit('deleteNote', { noteId: props.note.id });
     toast.success('Note deleted successfully');
-
   } catch (e) {
     toast.error(e.message || 'Failed to delete note');
-  }finally{
-    isDropdownOpen.value = false; // Close dropdown after delete
-
+  } finally {
+    isLoading.value = false; // Stop loading animation
   }
 };
 
 // Share the note with selected users
 const shareNote = async () => {
-  try{
+  try {
+    isLoading.value = true; // Start loading animation
     await noteStore.shareNote({
       NoteId: props.note.id,
       targetId: selectedUsers.value[0],
     });
     socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
     toast.success('Note shared successfully');
-  }catch(e){
+    
+  } catch (e) {
     toast.error(e.message || 'Failed to share note');
-
-  }finally{
-    closeShareModal();
+  } finally {
+    isLoading.value = false; // Stop loading animation
     isDropdownOpen.value = false; // Close dropdown after delete
+    closeShareModal();
   }
 };
+
 const handleMouseLeave = () => {
-  isDropdownOpen.value = false;  // Close dropdown when mouse leaves the card
-  isShareModalOpen.value = false;  // Close share modal if it's open
+  isDropdownOpen.value = false; // Close dropdown when mouse leaves the card
+  isShareModalOpen.value = false; // Close share modal if it's open
 };
 
 // Toggle dropdown and modal visibility
@@ -229,8 +232,6 @@ const toggleUserSelection = (userId) => {
     selectedUsers.value.push(userId);
   }
 };
-
-
 </script>
 
 <style scoped>
@@ -259,5 +260,33 @@ textarea {
 
 .editortext:focus {
   outline: none;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3; /* Light grey */
+  border-top: 4px solid #7b7cf2; /* Blue */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
