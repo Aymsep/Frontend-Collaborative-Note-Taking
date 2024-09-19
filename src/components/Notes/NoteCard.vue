@@ -195,10 +195,12 @@ const deleteNote = async () => {
 const shareNote = async () => {
   try {
     isLoading.value = true; // Start loading animation
+    isDropdownOpen.value = false; // Close dropdown after delete
     await noteStore.shareNote({
       NoteId: props.note.id,
       targetId: selectedUsers.value[0],
     });
+
     socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
     toast.success('Note shared successfully');
     
@@ -273,7 +275,7 @@ textarea {
   justify-content: center;
   align-items: center;
   background-color: white;
-  z-index: 1000;
+  z-index: 8;
   border-radius: 0.375rem;
 }
 
