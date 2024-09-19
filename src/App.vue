@@ -1,8 +1,10 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
+import Spinner from './components/common/Spinner.vue';
 </script>
 
 <template>
+  <Spinner   />
   <RouterView />
 </template>
 

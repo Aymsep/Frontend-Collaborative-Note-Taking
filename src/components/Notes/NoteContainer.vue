@@ -23,7 +23,6 @@ const { socket, getUserId } = useUserStore();
 // Listen for new shared notes via WebSocket when mounted
 onMounted(() => {
   socket.on(`noteShared:${getUserId}`, (data) => {
-    console.log('noteshared from container')
      addNoteWs(data.note);
   });
 
@@ -34,7 +33,6 @@ onMounted(() => {
 });
 
 const addNewNote = async () => {
-  console.log('clicked');
   const newNote = {
     content: '',
   };

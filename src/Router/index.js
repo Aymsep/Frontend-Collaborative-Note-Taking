@@ -24,13 +24,13 @@ const routes = [
       const userStore = useUserStore();
       const noteStore = useNotesStore();
 
-      // if (!userStore.isAuthenticated) {
-        // next('/login');
-      // } else {
+      if (!userStore.isAuthenticated) {
+        next('/login');
+      } else {
         await userStore.fetchProfile();
         await noteStore.fetchNotes();
         next();
-      // }
+      }
     },
   },
   {
