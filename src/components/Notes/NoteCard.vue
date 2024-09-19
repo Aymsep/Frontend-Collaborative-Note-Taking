@@ -3,7 +3,7 @@
     id="Card"
     :style="{ backgroundColor: randomBgColor }"
     class="relative flex justify-between flex-col p-4 rounded-md shadow-md"
-    @mouseleave="closeDropdown"
+    @mouseleave="handleMouseLeave"
   >
     <!-- Three dot menu with focus functionality -->
     <div class="absolute top-2 right-2">
@@ -67,6 +67,7 @@
     <!-- Share Modal -->
     <div
       v-if="isShareModalOpen"
+      @click.self="closeShareModal"
       class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
     >
       <div class="bg-white p-6 rounded-md w-96">
@@ -116,7 +117,17 @@ const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => 
 const socket = userStore.socket;
 
 // Random light background color
-const randomBgColor = ref(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
+const randomLightColor = () => {
+  const getLightHex = () => Math.floor(Math.random() * 128 + 128).toString(16).padStart(2, '0'); // Light range (128 to 255)
+  let color;
+  do {
+    color = `#${getLightHex()}${getLightHex()}${getLightHex()}`;
+  } while (color === '#ffffff'); // Exclude white color
+  return color;
+};
+
+const randomBgColor = ref(randomLightColor());
+
 
 // Apply styles to the contentEditable div
 const applyStyle = (command, value = null) => {
@@ -153,14 +164,14 @@ onMounted(() => {
     noteStore.removeNoteWs(props.note.id);
   });
 
-  socket.on(`noteShared:${userStore.getUserId}`, (data) => {
-    noteStore.addNoteWs(data.note);
-  });
+  // socket.on(`noteShared:${userStore.getUserId}`, (data) => {
+  //   noteStore.addNoteWs(data.note);
+  // });
 
   onUnmounted(() => {
     socket.off(`noteUpdated:${props.note.id}`);
     socket.off(`noteDeleted:${props.note.id}`);
-    socket.off(`noteShared:${userStore.getUserId}`);
+    // socket.off(`noteShared:${userStore.getUserId}`);
   });
 });
 
@@ -168,26 +179,45 @@ onMounted(() => {
 const deleteNote = async () => {
   try {
     await noteStore.removeNote(props.note.id);
+    isDropdownOpen.value = false; // Close dropdown after delete
     socket.emit('deleteNote', { noteId: props.note.id });
     toast.success('Note deleted successfully');
+
   } catch (e) {
     toast.error(e.message || 'Failed to delete note');
+  }finally{
+    isDropdownOpen.value = false; // Close dropdown after delete
+
   }
 };
 
 // Share the note with selected users
 const shareNote = async () => {
-  await noteStore.shareNote({
-    NoteId: props.note.id,
-    targetId: selectedUsers.value[0],
-  });
-  socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
-  toast.success('Note shared successfully');
-  closeShareModal();
+  try{
+    await noteStore.shareNote({
+      NoteId: props.note.id,
+      targetId: selectedUsers.value[0],
+    });
+    socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
+    toast.success('Note shared successfully');
+  }catch(e){
+    toast.error(e.message || 'Failed to share note');
+
+  }finally{
+    closeShareModal();
+    isDropdownOpen.value = false; // Close dropdown after delete
+  }
+};
+const handleMouseLeave = () => {
+  isDropdownOpen.value = false;  // Close dropdown when mouse leaves the card
+  isShareModalOpen.value = false;  // Close share modal if it's open
 };
 
 // Toggle dropdown and modal visibility
-const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value;
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+  closeShareModal(); // Close modal when the user interacts with the dropdown
+};
 const openShareModal = () => isShareModalOpen.value = true;
 const closeShareModal = () => isShareModalOpen.value = false;
 

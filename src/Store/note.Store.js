@@ -72,10 +72,8 @@ export const useNotesStore = defineStore('notes', {
         this.loading = true;
         try {
             const response = await shareNote(data);
-            console.log('response',response);
         } catch (err) {
-            this.error = 'Failed to fetch notes';
-            console.error('Error fetching notes:', err);
+            throw err.response.data.message
         } finally {
             this.loading = false;
     }

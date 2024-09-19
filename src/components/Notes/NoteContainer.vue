@@ -12,8 +12,26 @@
 import NoteCard from './NoteCard.vue';
 import AddNote from './AddNote.vue';
 import { useNotesStore } from '../../Store/note.Store';
+import { useUserStore } from '../../Store/user.Store';
+import { onMounted, onUnmounted } from 'vue'; 
 
-const { notes, addNote } = useNotesStore();
+const { notes, addNote, addNoteWs } = useNotesStore();  // Add addNoteWs to handle WebSocket notes
+const { socket, getUserId } = useUserStore();
+
+
+
+// Listen for new shared notes via WebSocket when mounted
+onMounted(() => {
+  socket.on(`noteShared:${getUserId}`, (data) => {
+    console.log('noteshared from container')
+     addNoteWs(data.note);
+  });
+
+  // Cleanup WebSocket listener on unmount
+  onUnmounted(() => {
+    socket.off(`noteShared:${getUserId}`);
+  });
+});
 
 const addNewNote = async () => {
   console.log('clicked');
