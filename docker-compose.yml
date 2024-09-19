@@ -1,0 +1,8 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vue-vite-app
+    ports:
+      - "5173:80"  # Map Vite's dev server to port 80 in the container
