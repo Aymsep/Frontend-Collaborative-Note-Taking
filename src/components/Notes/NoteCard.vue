@@ -272,8 +272,9 @@ textarea {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: white;
   z-index: 1000;
+  border-radius: 0.375rem;
 }
 
 .spinner {
