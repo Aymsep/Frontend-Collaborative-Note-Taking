@@ -57,6 +57,7 @@
       :options="editorOptions"
       class="editortext w-full h-full no-border"
       @input="handleContentChange"
+      style="border: none !important ; outline:none !important"
     />
 
     <!-- Text Styling Options -->
@@ -286,6 +287,9 @@ textarea {
 }
 .editortext:focus {
   outline: none;
+}
+.ql-toolbar.ql-snow{
+  border: none !important;
 }
 
 /* Loading overlay */
