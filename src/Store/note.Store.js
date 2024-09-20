@@ -41,7 +41,7 @@ export const useNotesStore = defineStore('notes', {
     async removeNote(noteId) {
       this.loading = true;
       try {
-        const deletedNote = await deleteNote(noteId);
+         await deleteNote(noteId);
         const noteIndex = this.notes.findIndex(note => note.id === noteId);
         if (noteIndex !== -1) {
           this.notes.splice(noteIndex, 1);  // Remove the note by index
@@ -57,7 +57,7 @@ export const useNotesStore = defineStore('notes', {
     async editNote(noteId, content) {
         this.loading = true;
         try {
-          const re = await updateNote(noteId, content);  // Call API to update the note
+          await updateNote(noteId, content);  // Call API to update the note
           const note = this.notes.find(note => note.id === noteId);
           if (note) note.content = content;  // Update the note in the store
         } catch (err) {
@@ -71,7 +71,7 @@ export const useNotesStore = defineStore('notes', {
     async shareNote(data){
         this.loading = true;
         try {
-            const response = await shareNote(data);
+            await shareNote(data);
         } catch (err) {
             throw err.response.data.message
         } finally {
