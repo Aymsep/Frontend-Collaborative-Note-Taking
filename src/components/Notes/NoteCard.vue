@@ -62,11 +62,6 @@
 
     <!-- Text Styling Options -->
     <div class="flex justify-between items-center mt-4">
-      <div>
-        <button @click="applyStyle('bold')" class="text-gray-600 hover:text-gray-900">Bold</button>
-        <button @click="applyStyle('italic')" class="ml-2 text-gray-600 hover:text-gray-900">Italic</button>
-        <button @click="applyStyle('foreColor', '#ff0000')" class="ml-2 text-gray-600 hover:text-gray-900">Red</button>
-      </div>
       <span class="text-sm text-gray-500">{{ formatDate(note.createdAt) }}</span>
     </div>
 
