@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { removeToken } from '../Utils/token.Utils';
 
+const url = import.meta.env.VITE_BASE_URL ? import.meta.env.VITE_BASE_URL + '/api/v1' : 'http://localhost:3000/api/v1'
+
 const axiosInstance = axios.create({
-  baseURL:`${import.meta.env.VITE_BASE_URL}/api/v1`|| 'http://localhost:3000/api/v1', 
+  baseURL:'https://backend-collaborative-note-taking.onrender.com/api/v1', 
   headers: {
       'Content-Type': 'application/json',
 },

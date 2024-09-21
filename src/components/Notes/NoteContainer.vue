@@ -24,6 +24,7 @@ const { socket, getUserId } = useUserStore();
 onMounted(() => {
   console.log('notes',notes)
   socket.on(`noteShared:${getUserId}`, (data) => {
+    console.log('notes shared',data)
      addNoteWs(data.note);
   });
 
