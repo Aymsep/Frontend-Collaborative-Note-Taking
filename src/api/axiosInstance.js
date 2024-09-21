@@ -2,7 +2,7 @@ import axios from 'axios';
 import { removeToken } from '../Utils/token.Utils';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3000/api/v1', 
+  baseURL:`${import.meta.env.VITE_BASE_URL}/api/v1`|| 'http://localhost:3000/api/v1', 
   headers: {
       'Content-Type': 'application/json',
 },
