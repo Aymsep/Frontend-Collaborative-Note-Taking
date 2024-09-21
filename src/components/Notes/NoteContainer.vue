@@ -18,8 +18,6 @@ import { onMounted, onUnmounted } from 'vue';
 const { notes, addNote, addNoteWs } = useNotesStore();  // Add addNoteWs to handle WebSocket notes
 const { socket, getUserId } = useUserStore();
 
-
-
 // Listen for new shared notes via WebSocket when mounted
 onMounted(() => {
   console.log('notes',notes)
@@ -56,5 +54,37 @@ const addNewNote = async () => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+}
+
+/* Responsive Design for Notes Grid */
+@media (max-width: 1200px) {
+  .notes-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-grid {
+    grid-template-columns: repeat(1, 1fr); /* 1 column on smaller screens */
+    gap: 1rem; /* Smaller gap between notes on smaller screens */
+  }
+
+  .title {
+    font-size: 2rem; /* Adjust title size on smaller screens */
+  }
+}
+
+@media (max-width: 576px) {
+  .notes-container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.75rem; /* Smaller title for very small screens */
+  }
+
+  .notes-grid {
+    gap: 1rem; /* Smaller gap between notes on mobile */
+  }
 }
 </style>
