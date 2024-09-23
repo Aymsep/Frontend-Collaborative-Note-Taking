@@ -252,7 +252,6 @@ const deleteNote = async () => {
 const shareNote = async (id) => {
   try {
     isLoading.value = true; // Start loading animation
-    isDropdownOpen.value = false; // Close dropdown after delete
     await noteStore.shareNote({
       NoteId: props.note.id,
       targetId: id,
