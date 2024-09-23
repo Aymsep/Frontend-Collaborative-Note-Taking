@@ -55,9 +55,9 @@
       :id="`editor-${note.id}`"
       v-model="noteContent"
       :options="editorOptions"
-      class="editortext w-full h-full no-border"
+      class="editortext w-full h-full no-border overflow-y-auto"
       @text-change="handleContentChange"
-      style="border: none !important ; outline:none !important"
+      style="border: none !important; outline:none !important; max-height: 180px;" 
     />
 
     <!-- Text Styling Options -->
@@ -112,16 +112,13 @@
                           </li>
                       </ul>
                   </div>
-                 
               </div>
-
           </div>
       </div>
     </div>
-
-    
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
