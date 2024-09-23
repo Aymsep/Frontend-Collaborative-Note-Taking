@@ -56,7 +56,7 @@
       v-model="noteContent"
       :options="editorOptions"
       class="editortext w-full h-full no-border"
-      @input="handleContentChange"
+      @text-change="handleContentChange"
       style="border: none !important ; outline:none !important"
     />
 
@@ -158,6 +158,7 @@ const isShareModalOpen = ref(false);
 const selectedUsers = ref([]);
 const userStore = useUserStore();
 const isLoading = ref(false); // Loading state
+const isRemoteUpdate = ref(false); // Flag to prevent re-emission of WebSocket updates
 
 // Computed to filter online users excluding the current user
 const filteredOnlineUsers = computed(() => userStore.onlineUsers.filter(user => user.id !== userStore.getUserId));
@@ -183,10 +184,14 @@ const debouncedSave = debounce(async (content) => {
 }, 500);
 
 const handleContentChange = () => {
-  const quillEditor = document.querySelector(`#editor-${props.note.id} .ql-editor`);
+  if (isRemoteUpdate.value) {
+    // If the update was from WebSocket, skip emitting it again
+    isRemoteUpdate.value = false;
+    return;
+  }
 
+  const quillEditor = document.querySelector(`#editor-${props.note.id} .ql-editor`);
   if (quillEditor) {
-    // Get the HTML content of the specific Quill editor instance
     const quillEditorHtml = quillEditor.innerHTML;
 
     console.log('Sending HTML content:', quillEditorHtml);
@@ -207,13 +212,17 @@ onMounted(() => {
     quillEditor.innerHTML = props.note.content; // Initialize content for the current note
   }
 
+  // Handle incoming updates from other users via WebSocket
   socket.on(`noteUpdated:${props.note.id}`, (updatedContent) => {
+    // Mark this as a remote update to avoid triggering the change event
+    isRemoteUpdate.value = true;
     noteContent.value = updatedContent;
     if (quillEditor) {
       quillEditor.innerHTML = updatedContent; // Sync content if updated
     }
   });
 
+  // Handle note deletion via WebSocket
   socket.on(`noteDeleted:${props.note.id}`, () => {
     noteStore.removeNoteWs(props.note.id);
   });
