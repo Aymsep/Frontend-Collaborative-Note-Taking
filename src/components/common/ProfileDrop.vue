@@ -3,7 +3,10 @@
     style="background-color: #6800ff;"
     class="flex-no-wrap relative flex w-full items-center justify-between py-2 shadow-dark-mild dark:bg-surface-dark lg:flex-wrap lg:justify-start lg:py-4">
     <div class="flex w-full flex-wrap items-center justify-between px-3">
-      <h2 class="text-white text-4xl font-bold px-[2rem]">Welcome Back, {{ username }}</h2>
+      <h2 class="text-white text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-4xl font-bold px-4">
+          Welcome Back, {{ username }}
+      </h2>
+
 
       <div class="relative flex items-center">
         <!-- Notification Icon with Counter -->
