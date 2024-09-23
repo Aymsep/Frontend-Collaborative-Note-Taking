@@ -68,7 +68,6 @@
     try {
       errorMessage.value = null
       await register(form.value)
-      router.push('/login')
     } catch (err) {
       errorMessage.value = err
     }
