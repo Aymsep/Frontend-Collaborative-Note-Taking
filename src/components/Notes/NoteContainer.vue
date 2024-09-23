@@ -1,14 +1,20 @@
 <template>
   <div class="notes-container">
-    <h1 class="title">Your Notes</h1>
+    <h1 class="title font-bold">Your Notes</h1>
     <div class="notes-grid">
       <NoteCard v-for="note in notes" :note="note" :key="note.id" />
       <AddNote @click="addNewNote" />
     </div>
+
+
+
+
+
   </div>
 </template>
 
 <script setup>
+import Avatar from '../common/Avatar.vue'
 import NoteCard from './NoteCard.vue';
 import AddNote from './AddNote.vue';
 import { useNotesStore } from '../../Store/note.Store';

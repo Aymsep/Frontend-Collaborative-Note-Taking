@@ -71,24 +71,55 @@
       @click.self="closeShareModal"
       class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
     >
-      <div class="bg-white p-6 rounded-md w-96">
-        <h2 class="text-lg font-bold mb-4">Share this note with:</h2>
-        <div class="flex flex-wrap">
-          <div
-            v-for="user in filteredOnlineUsers"
-            :key="user.id"
-            :class="['p-2 flex items-center cursor-pointer', { 'bg-blue-100': selectedUsers.includes(user.id) }]"
-            @click="toggleUserSelection(user.id)"
-          >
-            <span class="font-semibold">{{ user.username }}</span>
+      <!-- Main modal -->
+      <div id="crypto-modal" tabindex="-1" aria-hidden="true" class=" overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+          <div class="absolute ml-auto mr-auto right-0 left-0 top-[25%] p-4 w-full max-w-md max-h-full">
+              <!-- Modal content -->
+              <div class="relative bg-white rounded-lg shadow ">
+                  <!-- Modal header -->
+                  <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t" style="border-bottom:1px solid #6800ff !important">
+                      <h3 style="color: #6800ff !important;" class="text-lg font-semibold text-gray-900 dark:text-white">
+                          Select User
+                      </h3>
+                      <button @click="closeShareModal" type="button" class="text-gray-400 bg-transparent  hover:text-gray-900 rounded-lg text-sm h-8 w-8 ms-auto inline-flex justify-center items-center  dark:hover:text-white" data-modal-toggle="crypto-modal">
+                          <svg class="w-3 h-3" style="color: #6800ff !important;" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                          </svg>
+                          <span  class="sr-only">Close modal</span>
+                      </button>
+                  </div>
+                  <!-- Modal body -->
+                  <div class="p-4 md:p-5">
+                      <ul
+                      class="my-4 space-y-3">
+                      <li
+                          v-for="user in filteredOnlineUsers"
+                          :class="['w-full p-2  items-center  cursor-pointer']"
+                          :key="user.id"
+                          >
+                              <a
+                              :class="['flex items-center p-3 text-base font-bold text-gray-900 rounded-lg  group hover:bg-[#6800ff57]', { 'bg-blue-100': selectedUsers.includes(user.id) }]"
+                              @click="shareNote(user.id)"
+                              style="border:1px solid #6800ff !important"
+                              href="#" class="flex items-center p-3 text-base font-bold text-gray-900 rounded-lg  group hover:shadow  text-white">
+                                <div class="avatar-container">
+                                  <div class="avatar-circle">
+                                    <span >{{ user.username.charAt(0).toUpperCase() }}</span>
+                                  </div>
+                                </div>
+                                <span class="flex-1 ms-3 whitespace-nowrap" style="color: #6800ff !important;">{{ user.username }}</span>
+                              </a>
+                          </li>
+                      </ul>
+                  </div>
+                 
+              </div>
+
           </div>
-        </div>
-        <div class="flex justify-end mt-4">
-          <button @click="closeShareModal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2">Cancel</button>
-          <button @click="shareNote" class="px-4 py-2 bg-blue-600 text-white rounded-md">Share</button>
-        </div>
       </div>
     </div>
+
+    
   </div>
 </template>
 
@@ -209,16 +240,16 @@ const deleteNote = async () => {
 };
 
 // Share the note with selected users
-const shareNote = async () => {
+const shareNote = async (id) => {
   try {
     isLoading.value = true; // Start loading animation
     isDropdownOpen.value = false; // Close dropdown after delete
     await noteStore.shareNote({
       NoteId: props.note.id,
-      targetId: selectedUsers.value[0],
+      targetId: id,
     });
 
-    socket.emit('shareNote', { noteId: props.note.id, sharedWith: selectedUsers.value });
+    socket.emit('shareNote', { noteId: props.note.id, sharedWith: id });
     toast.success('Note shared successfully');
     
   } catch (e) {
@@ -226,6 +257,7 @@ const shareNote = async () => {
   } finally {
     isLoading.value = false; // Stop loading animation
     isDropdownOpen.value = false; // Close dropdown after delete
+    selectedUsers.value = []
     closeShareModal();
   }
 };
@@ -243,14 +275,14 @@ const toggleDropdown = () => {
 const openShareModal = () => isShareModalOpen.value = true;
 const closeShareModal = () => isShareModalOpen.value = false;
 
-// Toggle user selection for sharing
-const toggleUserSelection = (userId) => {
-  if (selectedUsers.value.includes(userId)) {
-    selectedUsers.value = selectedUsers.value.filter(id => id !== userId);
-  } else {
-    selectedUsers.value.push(userId);
-  }
-};
+// // Toggle user selection for sharing
+// const toggleUserSelection = (userId) => {
+//   if (selectedUsers.value.includes(userId)) {
+//     selectedUsers.value = selectedUsers.value.filter(id => id !== userId);
+//   } else {
+//     selectedUsers.value.push(userId);
+//   }
+// };
 </script>
 
 <style scoped>
@@ -315,4 +347,25 @@ textarea {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.avatar-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #6800ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+  }
 </style>
