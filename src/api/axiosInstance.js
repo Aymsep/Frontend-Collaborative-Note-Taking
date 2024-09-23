@@ -4,7 +4,7 @@ import { removeToken } from '../Utils/token.Utils';
 const url = import.meta.env.VITE_BASE_URL ? import.meta.env.VITE_BASE_URL + '/api/v1' : 'http://localhost:3000/api/v1'
 
 const axiosInstance = axios.create({
-  baseURL:'https://backend-collaborative-note-taking.onrender.com/api/v1', 
+  baseURL:url, 
   headers: {
       'Content-Type': 'application/json',
 },
@@ -25,7 +25,6 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response.status === 401) {
       removeToken();
-      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }

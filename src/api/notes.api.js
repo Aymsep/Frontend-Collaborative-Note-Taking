@@ -13,7 +13,6 @@ export const getSingleNote = (noteId) => {
 };
 
 export const updateNote = (noteId,content) => {
-  console.log('entred')
   return api.patch(`/notes/${noteId}`, {content} );
 };
 

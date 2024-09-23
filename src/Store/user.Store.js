@@ -32,18 +32,15 @@ export const useUserStore = defineStore('user', {
 
         // Listen for 'onlineUsers' event
         this.socket.on('onlineUsers', (users) => {
-          console.log('Online users:', users);
           this.onlineUsers = users.filter(user => user.id !== this.user.id); // Exclude current user
         });
 
         // Handle WebSocket disconnection
         this.socket.on('disconnect', () => {
-          console.log('WebSocket disconnected');
         });
 
         // Handle errors during WebSocket connection
         this.socket.on('connect_error', (err) => {
-          console.error('WebSocket connection error:', err);
         });
       }
     },
@@ -133,7 +130,7 @@ export const useUserStore = defineStore('user', {
 
     // Handle errors
     handleError(err, defaultMessage) {
-      throw this.error = err.response?.data?.message || defaultMessage;
+      this.error = err.response?.data?.message || defaultMessage;
     },
 
     // Set loading state

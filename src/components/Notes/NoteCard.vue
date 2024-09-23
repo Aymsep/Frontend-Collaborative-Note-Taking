@@ -191,7 +191,6 @@ const handleContentChange = () => {
   if (quillEditor) {
     const quillEditorHtml = quillEditor.innerHTML;
 
-    console.log('Sending HTML content:', quillEditorHtml);
 
     // Emit the HTML content as a string through WebSocket
     socket.emit('editNote', { noteId: props.note.id, content: quillEditorHtml });
@@ -280,14 +279,7 @@ const toggleDropdown = () => {
 const openShareModal = () => isShareModalOpen.value = true;
 const closeShareModal = () => isShareModalOpen.value = false;
 
-// // Toggle user selection for sharing
-// const toggleUserSelection = (userId) => {
-//   if (selectedUsers.value.includes(userId)) {
-//     selectedUsers.value = selectedUsers.value.filter(id => id !== userId);
-//   } else {
-//     selectedUsers.value.push(userId);
-//   }
-// };
+
 </script>
 
 <style scoped>

@@ -26,7 +26,6 @@
     try {
       logout();
       router.push('/login');
-    //   console.log('Logged out');
     } catch (error) {
       console.log(error);
     }

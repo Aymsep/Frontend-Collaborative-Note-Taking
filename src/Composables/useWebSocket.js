@@ -13,12 +13,10 @@ export const useWebSocket = (noteId) => {
     });
 
     socket.on(`noteDeleted:${noteId}`, () => {
-      console.log(`Note deleted: ${noteId}`);
       // Handle note deletion
     });
 
     socket.on(`noteShared:${userStore.getUserId}`, (data) => {
-      console.log('Note shared:', data.note);
       // Handle note shared
     });
   };
