@@ -15,8 +15,8 @@ export const useUserStore = defineStore('user', {
   }),
 
   actions: {
+    // Initialize WebSocket
     initializeWebSocket() {
-      // Initialize WebSocket only if not already initialized and if the user is authenticated
       if (!this.socket && this.isAuthenticated && this.user) {
         this.socket = io('https://backend-collaborative-note-taking.onrender.com', {
           transports: ['websocket'],
@@ -26,27 +26,34 @@ export const useUserStore = defineStore('user', {
           },
         });
 
-        // Listen for 'onlineUsers' event to get updated list of online users
+        this.socket.on('connect', () => {
+          console.log('WebSocket connected');
+        });
+
+        // Listen for 'onlineUsers' event
         this.socket.on('onlineUsers', (users) => {
           console.log('Online users:', users);
           this.onlineUsers = users.filter(user => user.id !== this.user.id); // Exclude current user
         });
 
-        // Handle WebSocket disconnection or other custom logic as needed
+        // Handle WebSocket disconnection
         this.socket.on('disconnect', () => {
           console.log('WebSocket disconnected');
+        });
+
+        // Handle errors during WebSocket connection
+        this.socket.on('connect_error', (err) => {
+          console.error('WebSocket connection error:', err);
         });
       }
     },
 
-    // Call this method when app starts, on page reloads or when user is already authenticated
+    // Auto-login for page reloads
     autoLogin() {
       if (this.isAuthenticated && !this.user) {
-        // Fetch user profile (e.g., from backend)
         this.fetchProfile();
       }
 
-      // Initialize WebSocket connection if the user is already authenticated
       if (this.isAuthenticated) {
         this.initializeWebSocket();
       }
@@ -55,6 +62,7 @@ export const useUserStore = defineStore('user', {
     // Login action
     async login(formData) {
       this.setLoading(true);
+      this.error = null; // Clear previous errors
 
       try {
         const { data } = await loginApi(formData);
@@ -70,6 +78,7 @@ export const useUserStore = defineStore('user', {
     // Register action
     async register(formData) {
       this.setLoading(true);
+      this.error = null;
 
       try {
         const { data } = await registerApi(formData);
@@ -85,11 +94,12 @@ export const useUserStore = defineStore('user', {
     // Fetch user profile
     async fetchProfile() {
       this.setLoading(true);
+      this.error = null;
 
       try {
         const { data } = await getProfile();
         this.user = data;
-        this.initializeWebSocket(); // Ensure WebSocket is initialized after profile fetch
+        this.initializeWebSocket();
       } catch (err) {
         this.handleError(err, 'Failed to fetch profile');
       } finally {
@@ -103,10 +113,10 @@ export const useUserStore = defineStore('user', {
       this.user = null;
       this.notes = [];
       removeToken();
-      this.disconnectWebSocket(); // Disconnect WebSocket during logout
+      this.disconnectWebSocket(); // Disconnect WebSocket on logout
     },
 
-    // Disconnect WebSocket and clean up on logout
+    // Disconnect WebSocket on logout
     disconnectWebSocket() {
       if (this.socket) {
         this.socket.disconnect();
@@ -114,16 +124,16 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    // Auth success handler
+    // Handle authentication success
     handleAuthSuccess({ access_token, user }) {
       this.token = access_token;
       this.user = user;
       saveToken(access_token);
     },
 
-    // Error handler
+    // Handle errors
     handleError(err, defaultMessage) {
-      this.error = err.response?.data?.message || defaultMessage;
+      throw this.error = err.response?.data?.message || defaultMessage;
     },
 
     // Set loading state
