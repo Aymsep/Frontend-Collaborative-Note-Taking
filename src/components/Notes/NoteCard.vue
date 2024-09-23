@@ -18,7 +18,7 @@
           style="color:#6800ff !important"
           @click="toggleDropdown"
           xmlns="http://www.w3.org/2000/svg"
-          class="h-[2.5rem] w-5 cursor-pointer text-gray-600"
+          class="h-[3.5rem] w-5 cursor-pointer text-gray-600"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -34,7 +34,7 @@
         <!-- Dropdown -->
         <div
           v-if="isDropdownOpen"
-          class="noteDropdown absolute right-0 w-32 rounded-md shadow-lg py-1 z-10"
+          class="noteDropdown absolute right-0 w-32 rounded-md shadow-lg  z-10"
         >
           <a
             href="#"
