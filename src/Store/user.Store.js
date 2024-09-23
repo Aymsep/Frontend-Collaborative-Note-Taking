@@ -3,6 +3,7 @@ import { login as loginApi, register as registerApi, getProfile } from '../api/a
 import { saveToken, getToken, removeToken } from '../Utils/token.Utils';
 import { io } from 'socket.io-client';
 
+const url = import.meta.env.VITE_BASE_URL ? import.meta.env.VITE_BASE_URL + '/api/v1' : 'http://localhost:3000/api/v1'
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: getToken() || null,
@@ -18,7 +19,7 @@ export const useUserStore = defineStore('user', {
     // Initialize WebSocket
     initializeWebSocket() {
       if (!this.socket && this.isAuthenticated && this.user) {
-        this.socket = io('https://backend-collaborative-note-taking.onrender.com', {
+        this.socket = io(url, {
           transports: ['websocket'],
           query: {
             userId: this.user.id,
