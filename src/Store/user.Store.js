@@ -3,7 +3,7 @@ import { login as loginApi, register as registerApi, getProfile } from '../api/a
 import { saveToken, getToken, removeToken } from '../Utils/token.Utils';
 import { io } from 'socket.io-client';
 
-const url = import.meta.env.VITE_BASE_URL ? import.meta.env.VITE_BASE_URL + '/api/v1' : 'http://localhost:3000'
+const url = import.meta.env.VITE_BASE_URL ? import.meta.env.VITE_BASE_URL : 'http://localhost:3000'
 console.log('url', url)
 export const useUserStore = defineStore('user', {
   state: () => ({
