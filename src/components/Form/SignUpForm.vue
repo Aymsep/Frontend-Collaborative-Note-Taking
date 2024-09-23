@@ -8,7 +8,10 @@
       </div>
   
       <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form @submit.prevent="handleRegister" class="space-y-6" action="#" method="POST">
+        <form @submit.prevent="handleRegister" class="space-y-6"  method="POST">
+          <div v-if="errorMessage" class="text-red-600 text-sm text-center">
+          {{ errorMessage }}
+          </div>
             <div>
                 <label for="username" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
                 <div class="mt-2">
@@ -59,10 +62,16 @@
 
   const {register} = useUserStore()
   const router = useRouter()  
+  const errorMessage = ref(null)
 
   const handleRegister = async () => {
-    await register(form.value)
-    router.push('/login')
+    try {
+      errorMessage.value = null
+      await register(form.value)
+      router.push('/login')
+    } catch (err) {
+      errorMessage.value = err
+    }
   }
 
 
