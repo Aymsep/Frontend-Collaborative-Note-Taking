@@ -18,7 +18,7 @@ export const useUserStore = defineStore('user', {
     initializeWebSocket() {
       // Initialize WebSocket only if not already initialized and if the user is authenticated
       if (!this.socket && this.isAuthenticated && this.user) {
-        this.socket = io('http://localhost:3000', {
+        this.socket = io('https://backend-collaborative-note-taking.onrender.com', {
           transports: ['websocket'],
           query: {
             userId: this.user.id,

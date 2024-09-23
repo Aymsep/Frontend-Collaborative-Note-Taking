@@ -8,8 +8,9 @@ import Spinner from './components/common/Spinner.vue';
 </template>
 
 <style scoped>
-body{
-  /* background-color:red !important; */
+
+:global(body){
+  background-color:#ececec !important;
 }
 .logo {
   height: 6em;
